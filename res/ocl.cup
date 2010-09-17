@@ -1,0 +1,195 @@
+import java_cup.runtime.*;
+
+/* Terminais (tokens vindos do lexer) */
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
+terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
+terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
+terminal Atributos	ID;
+terminal Atributos			STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION;
+terminal Atributos	INTEGER;
+terminal 			VOID, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
+terminal Atributos		REAL;
+terminal Atributos	TRUE, FALSE;
+
+
+/* Não terminais */
+non terminal	Atributos OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
+non terminal	Atributos			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, SimpleTypeSpecifier, PathName, OCLLiteral;
+non terminal	Atributos		BoolValue, Number;
+//Expressions
+non terminal	Atributos		PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
+//Operators
+non terminal	Atributos 		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, AddOperator, LogicalOperator;
+//Conditional Expressions
+non terminal	Atributos			ConditionalExpression, IfExpression, ImpliesExpression;
+//Collections
+non terminal	Atributos			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludesOperation, ExcludesOperation, ForAllOperation, SizeOperation, CollectionParameters;
+
+precedence left IMPLIES;
+precedence left XOR;
+precedence left OR;
+precedence left AND;
+precedence left DIFF, IGUAL;
+precedence left MENORIGUAL, MAIORIGUAL, MENORQ, MAIORQ;
+precedence left IF, THEN, ELSE, ENDIF;
+precedence left MAIS, MENOS;
+precedence left VEZES, DIVIDIR;
+precedence left PONTO, SETA;
+
+
+/* Regras */
+// Regra Inicial
+
+start with OCLFile;
+
+// Regras para constraints
+
+OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
+		  | OCLConstraints;
+				
+OCLConstraints ::= Constraint OCLConstraints | Constraint;
+
+Constraint ::= ContextDeclaration ContextBody;
+
+ContextDeclaration ::= CONTEXT OperationContext
+					 | CONTEXT ClassifierContext;
+				
+ContextBody ::= InvExpression
+			  | PreExpression;
+				
+InvExpression ::= INV DOISPONTOS OCLExpression 
+				| INV ID DOISPONTOS OCLExpression;
+
+PreExpression ::= PRE DOISPONTOS OCLExpression
+				| PRE ID DOISPONTOS OCLExpression
+				| POS DOISPONTOS OCLExpression
+				| POS ID DOISPONTOS OCLExpression
+				| PRE DOISPONTOS OCLExpression POS DOISPONTOS OCLExpression
+				| PRE ID: DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression;
+
+OperationContext ::= ID QUATROPONTOS PropertyCall
+				   | ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier;
+				
+ClassifierContext ::= ID DOISPONTOS ID
+					| ID;
+
+// Expressões 
+
+OCLExpression ::= LogicalExpression;
+
+LogicalExpression ::= RelationalExpression
+				| RelationalExpression LogicalOperator LogicalExpression;
+				
+RelationalExpression  ::= AdditiveExpression
+				| AdditiveExpression RelationalOperator RelationalExpression;
+				
+AdditiveExpression ::= MultiplicativeExpression
+				| MultiplicativeExpression AddOperator AdditiveExpression;
+				
+MultiplicativeExpression ::= UnaryExpression
+				| UnaryExpression MultiplyOperator MultiplicativeExpression;
+				
+UnaryExpression ::= PrimaryExpression
+				| UnaryOperator UnaryExpression
+				| PrimaryExpression UnaryOperator UnaryExpression;
+				
+PrimaryExpression ::= LiteralCollection
+				| IfExpression
+				| LPAREN OCLExpression
+				| CollectionExpression;
+
+LiteralCollection ::= Number
+				| BoolValue
+				| STRING
+				| PropertyCall
+				| PropertyCall
+				
+IfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF;		
+
+//Expressões em coleções	
+			
+CollectionExpression ::= CollectionOperations;
+
+CollectionOperations ::= SelectOperation
+				|ExistsOperation
+				|IncludesOperation
+				|ExcludesOperation
+				|ForAllOperation
+				|SizeOperation
+				
+SelectOperation ::= SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
+				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN
+				| SELECT LPAREN OCLExpression RPAREN;
+
+ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
+				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
+				| EXISTS LPAREN OCLExpression RPAREN;
+
+IncludesOperation ::= INCLUDES LPAREN ID RPAREN;
+
+ExcludesOperation ::= EXCLUDES LPAREN ID RPAREN;
+
+ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
+				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
+				| FORALL LPAREN OCLExpression RPAREN;
+
+SizeOperation ::= SIZE LPAREN RPAREN;
+
+CollectionParameters ::= PropertyCall
+				| PropertyCall VIRGULA CollectionParameters;
+
+
+//Tipos
+
+TypeSpecifier ::= PathName
+		| INTTYPE
+		| REALTYPE
+		| VOID
+		| STRING
+		| BOOLEAN;
+		
+//Literais
+
+PropertyCall ::= RESULT
+				| PathName
+				| PathName LPAREN RPAREN
+				| PathName LPAREN FormalParameters: RPAREN
+				| PathName PONTO PropertyCall;
+				
+				
+FormalParameters ::= FormalParameters VIRGULA FormalParameter
+				|FormalParameter;
+							
+FormalParameter ::= ID DOISPONTOS TypeSpecifier
+				|PropertyCall
+				
+PathName ::= ID
+		   | ID PONTO PathName
+		   | ID QUATROPONTOS PathName;
+		
+Number ::= INTEGER
+			| REAL;
+
+BoolValue ::= TRUE
+			| FALSE;
+		
+//Operators
+
+LogicalOperator ::= AND
+				  | OR
+				  | XOR
+				  | IMPLIES;
+		
+RelationalOperator ::= MAIORQ
+					 | MAIORIGUAL
+					 | MENORQ
+					 | MENORIGUAL
+					 | IGUAL
+					 | DIFF;
+
+		
+AddOperator ::= MAIS | MENOS;
+
+MultiplyOperator ::= VEZES | DIVIDIR;
+UnaryOperator ::= NOT
+				| SETA;
