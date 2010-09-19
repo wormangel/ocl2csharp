@@ -1,0 +1,79 @@
+<!--
+
+Copyright (C) 2010  Renato Miceli
+
+    OCL2SQL Compiler is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OCL2SQL Compiler is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OCL2SQL Compiler. If not, see <http://www.gnu.org/licenses/>.
+    
+
+Ant script for generating JFlex Scanner and CUP Parser for the OCL to SQL Compiler.
+
+Author: Renato Miceli (renatomiceli@gmail.com)
+Date: May 18th 2010
+
+For more about the author and the project, please go to:
+www.lsd.ufcg.edu.br/~renato
+
+-->
+
+<!-- Here is the project name -->
+<project name="OCL2C# Compiler" default="generate_compiler">
+
+	<!-- Java source directory -->
+	<property name="src.dir" value="./src/" />
+	
+	<!-- Java bytecode output directory -->
+	<property name="bin.dir" value="./bin/" />
+	
+	<!-- Resources directory (where .flex and .cup are) -->
+	<property name="resources.dir" value="./res/" />
+	
+	<!-- Library directory (where JFlex and CUP jars are) -->
+	<property name="lib.dir" value="./lib/" />
+	
+	<path id="classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<taskdef name="cup" classname="java_cup.anttask.CUPTask" classpathref="classpath" />
+
+	<!-- Cleaning target removes all Java bytecodes -->
+	<target name="clean" description="Delete output files">
+		<delete dir="${bin.dir}" />
+		<mkdir dir="${bin.dir}" />
+	</target>
+
+	<!-- Generates the scanner from the scanner.flex file (found in the resources directory) -->
+	<target name="generate_scanner" description="Generates the JFlex Scanner">
+		<java fork="yes" classname="JFlex.Main" failonerror="true">
+			<classpath refid="classpath" />
+			<arg value="-v" />
+			<arg value="-d" />
+			<arg value="${src.dir}/" />
+			<arg value="${resources.dir}/ocl.flex" />
+		</java>
+	</target>
+
+	<!-- Generates the parser from the parser.cup file (found in the resources directory) -->
+	<target name="generate_parser" description="Generates the CUP Parser">
+		<cup srcfile="${resources.dir}/ocl.cup" 
+			destdir="${src.dir}/"
+			interface="true" nowarn="true" force = "true"/>
+	</target>
+
+	<!-- Generates both the scanner and the parser -->
+	<target name="generate_compiler" depends="generate_scanner, generate_parser" description="Generates the OCL2SQL Compiler" />
+
+</project>

@@ -95,14 +95,13 @@ UnaryExpression ::= PrimaryExpression
 				
 PrimaryExpression ::= LiteralCollection
 				| IfExpression
-				| LPAREN OCLExpression
+				| LPAREN OCLExpression RPAREN
 				| CollectionExpression;
 
 LiteralCollection ::= Number
 				| BoolValue
 				| STRING
-				| PropertyCall
-				| PropertyCall
+				| PropertyCall;
 				
 IfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF;		
 
@@ -115,7 +114,7 @@ CollectionOperations ::= SelectOperation
 				|IncludesOperation
 				|ExcludesOperation
 				|ForAllOperation
-				|SizeOperation
+				|SizeOperation;
 				
 SelectOperation ::= SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
 				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN
@@ -153,7 +152,7 @@ TypeSpecifier ::= PathName
 PropertyCall ::= RESULT
 				| PathName
 				| PathName LPAREN RPAREN
-				| PathName LPAREN FormalParameters: RPAREN
+				| PathName LPAREN FormalParameters RPAREN
 				| PathName PONTO PropertyCall;
 				
 				
@@ -161,7 +160,7 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 				|FormalParameter;
 							
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
-				|PropertyCall
+				|PropertyCall;
 				
 PathName ::= ID
 		   | ID PONTO PathName

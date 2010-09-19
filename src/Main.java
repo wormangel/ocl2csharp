@@ -21,7 +21,7 @@ public class Main {
 			Lexer scanner = new Lexer( new java.io.FileReader(argv[i]) );
 			try{
 				parser p = new parser(scanner); 
-				p.parse();
+				p.parse();				
 			}
 			catch(Exception e){
 				System.err.print("Erro");
