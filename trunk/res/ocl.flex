@@ -24,7 +24,7 @@ import java_cup.runtime.*;
   }
   
   private int linha = 1;
-  private boolean debug = false;
+  private boolean debug = true;
 %}
 
 delim	= [ \t\r]
