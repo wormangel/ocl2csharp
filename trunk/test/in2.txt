@@ -1,0 +1,140 @@
+context CustomerCard
+inv: printedName = customer.title.concat( customer.name )
+
+context Customer
+inv: age >= 18
+
+context Customer
+inv: name = 'Edward'
+
+context Customer
+inv: self.name = 'Edward'
+
+context Services
+inv: self.pointsOffered > 0 implies not self.pointsBurned = 0 
+
+context Customer
+inv: title = (if isMale = true 
+            then 'Mr.' 
+            else 'Ms.'
+         endif)
+
+context Customer
+inv: 	self.age() >= 0
+
+context Customer
+inv: 	self.isRelatedTo(self) = true
+
+context Customer
+inv: self.name = 'Jos senior' implies self.age() > 21
+
+context Transaction
+inv: self.program() = customerCard.membership.program
+
+context CassetteBook
+inv: self.volume < 10
+
+context Customer
+inv: 	gender = 'male' implies title = 'Mr.'
+
+context Unknown
+inv: Customer.name = 'Customer'
+
+context LoyaltyProgram
+inv: serviceLevel->size() = 2
+
+context Customer
+inv: program->size() = cards->select( valid = true )->size()
+
+context ProgramPartner
+inv: numberOfCustomers = loyaltyProgram.customer->size()
+
+context LoyaltyProgram
+inv: customer->forAll( age >= 18 )
+
+context Membership
+inv: customer.card.membership->includes( self )
+
+context Membership
+inv: program.serviceLevel->includes( actualLevel )
+
+context LoyaltyProgram
+inv: serviceLevel->includesAll( membership.actualLevel )
+
+context LoyaltyProgram
+inv: self.serviceLevel->exists(name = 'basic')
+
+--context LoyaltyProgram
+--inv: self.PartnerAspects::partners->size < 10
+
+context LoyaltyProgram
+inv: self.customer->size() < 10000
+
+context Membership
+inv: program.serviceLevel->includes(actualLevel)
+
+context CustomerCard
+inv: 	self.transactions->select( points > 100 )
+
+context Customer
+inv: 	membership.loyaltyAccount->select(a : LoyaltyAccount | a.points > 0)
+
+context Customer
+inv: 	membership.loyaltyAccount->select(a | a.points > 0)
+
+context Customer
+inv: 	membership.loyaltyAccount->select( points > 0 )
+
+context ProgramPartner
+inv: 	self.loyaltyProgram.partners->
+                        select(p : ProgramPartner | p <> self)
+
+context Customer
+inv: 	membership.loyaltyAccount->select( points > 0 )
+
+context LoyaltyAccount
+inv: transactions.points->exists(p : Integer | p = 500 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( c : Customer | c.age() <= 70 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( c | c.age() <= 70 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( age() <= 70 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll(c1, c2 |	c1 <> c2 implies c1.name <> c2.name)
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( c1 | self.customer->forAll( c2 |
+	      	                      c1 <> c2 implies c1.name <> c2.name ))
+
+context LoyaltyAccount
+inv: points > 0 implies transaction->exists(points > 0)
+
+context ProgramPartner
+inv: self.services.transaction->select(oclType = Burning)->sum
+<=
+self.services.transaction->select(oclType = Earning)->sum
+
+context LoyaltyAccount::isEmpty()
+post: result = (points = 0)
+
+context Transaction::program():LoyaltyProgram
+post: result = self.card.membership.program
+
+context Transaction::program():LoyaltyProgram
+post: OclIsNew(result)
+
+context LoyaltyProgram::enroll(c : Customer)
+pre : not customer->includes(c)
+post: customer = customer@pre->including(c)
+
+context Transaction::program():LoyaltyProgram
+post: result = self.card.membership.program
+
+context ProgramaFidelidade::cadastrar(c : Cliente) : void 
+pre parametroOk: not cliente->includes(c) 
+post resultadoOk: cliente = cliente@pre->includes(c)
