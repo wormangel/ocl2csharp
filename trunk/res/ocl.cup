@@ -1,29 +1,37 @@
 import java_cup.runtime.*;
 
-/* Terminais (tokens vindos do lexer) */
-terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
+/* Terminais  */
+
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
-terminal Atributos	ID;
-terminal Atributos			STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION;
-terminal Atributos	INTEGER;
 terminal 			VOID, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
-terminal Atributos		REAL;
-terminal Atributos	TRUE, FALSE;
+terminal Atributos	STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION, INTEGER, REAL, TRUE, FALSE, ID;
 
 
 /* Não terminais */
-non terminal	Atributos OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
-non terminal	Atributos			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, SimpleTypeSpecifier, PathName, OCLLiteral;
-non terminal	Atributos		BoolValue, Number;
-//Expressions
-non terminal	Atributos		PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
-//Operators
-non terminal	Atributos 		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, AddOperator, LogicalOperator;
-//Conditional Expressions
-non terminal	Atributos			ConditionalExpression, IfExpression, ImpliesExpression;
-//Collections
-non terminal	Atributos			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludesOperation, ExcludesOperation, ForAllOperation, SizeOperation, CollectionParameters;
+
+non terminal Atributos OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
+non terminal Atributos OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, SimpleTypeSpecifier, PathName, OCLLiteral;
+non terminal Atributos BoolValue, Number;
+
+// Expressões
+
+non terminal Atributos PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
+
+// Operadores lógicos, aritméticos e relacionais
+
+non terminal Atributos MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, AddOperator, LogicalOperator;
+
+// Expressões condicionais
+
+non terminal Atributos ConditionalExpression, IfExpression, ImpliesExpression;
+
+// Coleções e expressões sobre condições
+
+non terminal Atributos CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludesOperation, ExcludesOperation, ForAllOperation, SizeOperation, CollectionParameters;
+
+/* Precedência dos terminais */
 
 precedence left IMPLIES;
 precedence left XOR;
@@ -36,8 +44,8 @@ precedence left MAIS, MENOS;
 precedence left VEZES, DIVIDIR;
 precedence left PONTO, SETA;
 
-
 /* Regras */
+
 // Regra Inicial
 
 start with OCLFile;
@@ -137,7 +145,6 @@ SizeOperation ::= SIZE LPAREN RPAREN;
 CollectionParameters ::= PropertyCall
 				| PropertyCall VIRGULA CollectionParameters;
 
-
 //Tipos
 
 TypeSpecifier ::= PathName
@@ -149,8 +156,7 @@ TypeSpecifier ::= PathName
 		
 //Literais
 
-PropertyCall ::= RESULT
-				| PathName
+PropertyCall ::= PathName
 				| PathName LPAREN RPAREN
 				| PathName LPAREN FormalParameters RPAREN
 				| PathName PONTO PropertyCall;
@@ -172,7 +178,7 @@ Number ::= INTEGER
 BoolValue ::= TRUE
 			| FALSE;
 		
-//Operators
+// Operadores
 
 LogicalOperator ::= AND
 				  | OR
@@ -186,9 +192,6 @@ RelationalOperator ::= MAIORQ
 					 | IGUAL
 					 | DIFF;
 
-		
 AddOperator ::= MAIS | MENOS;
-
 MultiplyOperator ::= VEZES | DIVIDIR;
-UnaryOperator ::= NOT
-				| SETA;
+UnaryOperator ::= NOT | SETA;
