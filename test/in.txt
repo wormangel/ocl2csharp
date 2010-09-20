@@ -1,3 +1,48 @@
+context _c
+inv: 3.0 = 3
+
 context CustomerCard
 inv: printedName = customer.title.concat( customer.name )
 
+context Cliente
+inv teste: 	self.customer->select( c | c.name = 'David')
+
+context Cliente
+inv: 	self.customer->select( c : Customer | c.name = 'David')
+
+context Cliente
+inv: 	self.customer->exists( name = 'David')
+
+context Cliente
+pre: 	self.customer->exists( c | c.name = 'David')
+
+context Cliente
+pre: 	self.customer->exists( c : Customer | c.name = 'David')
+
+
+
+context Cliente
+inv: 	self.customer->includes(cas)
+
+context Cliente
+inv: 	self.customer->excludes(caa)
+
+context Cliente
+inv: 	self.customer->size() > 1
+
+context Cliente
+inv: 	self.customer->forAll( c : Customer | c.age() <= 70 )
+
+context Cliente
+inv: 	self.customer->forAll( c1,c2 : Customer | c1.age() <= c2.age() )
+
+context Cliente
+inv: 	self.customer->forAll( c1,c2 | c1.age() <= c2.age() )
+
+context Cliente
+inv: 	self.customer->forAll( age() > 18 )
+
+context Cliente inv: self.customer->size() * 2 <= 18
+context Cliente inv: self.customer->size() + 2 <= 18
+context Cliente inv: self.customer->size() - 2 <= 18
+context Cliente inv: self.customer->size() / 2 <= 18
