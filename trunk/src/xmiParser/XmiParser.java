@@ -32,7 +32,7 @@ public class XmiParser {
 	public static final String TYPE_STRING = "string";
 	public static final String TYPE_BOOLEAN = "bool";
 
-	private final static String XMI_PATH = "testfiles/xmi/profe.uml2";
+	private final static String XMI_PATH = "test/xmi/profe.uml2";
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		
