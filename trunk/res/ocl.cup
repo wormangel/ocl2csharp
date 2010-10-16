@@ -83,33 +83,39 @@ ClassifierContext ::= ID DOISPONTOS ID
 
 // Expressões 
 
-OCLExpression ::= LogicalExpression;
+OCLExpression ::= LogicalExpression:e {: RESULT = e; :};
 
-LogicalExpression ::= RelationalExpression
-				| RelationalExpression LogicalOperator LogicalExpression;
+LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
+				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2
+				{:
+					if (e1.Type != Boolean.class || e2.Type != Boolean.class) {
+						System.out.println("\n\nsemantico:\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e1");
+						
+					}
+				:};
 				
-RelationalExpression  ::= AdditiveExpression
+RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}  
 				| AdditiveExpression RelationalOperator RelationalExpression;
 				
-AdditiveExpression ::= MultiplicativeExpression
+AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression AddOperator AdditiveExpression;
 				
-MultiplicativeExpression ::= UnaryExpression
+MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				| UnaryExpression MultiplyOperator MultiplicativeExpression;
 				
-UnaryExpression ::= PrimaryExpression
+UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 				| UnaryOperator UnaryExpression
 				| PrimaryExpression UnaryOperator UnaryExpression;
 				
-PrimaryExpression ::= LiteralCollection
+PrimaryExpression ::= LiteralCollection:c {: RESULT = c; :}
 				| IfExpression
 				| LPAREN OCLExpression RPAREN
 				| CollectionExpression;
 
-LiteralCollection ::= Number
-				| BoolValue
-				| STRING
-				| PropertyCall;
+LiteralCollection ::= Number:n 		{: RESULT = n; :}
+					| BoolValue:b 	{: RESULT = b; :}
+					| STRING:s  	{: RESULT = new Atributos(String.class, s.Value, ""); :}
+					| PropertyCall:p 	{: RESULT = p; :};
 				
 IfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF;		
 
@@ -172,18 +178,18 @@ PathName ::= ID
 		   | ID PONTO PathName
 		   | ID QUATROPONTOS PathName;
 		
-Number ::= INTEGER
-			| REAL;
+Number ::= INTEGER:i {: RESULT = new Atributos(Integer.class, Integer.parseInt(i.Value.toString()), ""); :}
+			| REAL:r {: RESULT = new Atributos(Double.class, Double.parseDouble(r.Value.toString()), ""); :};
 
-BoolValue ::= TRUE
-			| FALSE;
+BoolValue ::= TRUE:t {: RESULT = new Atributos(Boolean.class, t.Value, ""); :}
+			| FALSE:f {: RESULT = new Atributos(Boolean.class, f.Value, ""); :};
 		
 // Operadores
 
-LogicalOperator ::= AND
-				  | OR
-				  | XOR
-				  | IMPLIES;
+LogicalOperator ::= AND {: RESULT = new Atributos(String.class, "&&", ""); :}
+				  | OR {: RESULT = new Atributos(String.class, "||", ""); :}
+				  | XOR {: RESULT = new Atributos(String.class, "^", ""); :}
+				  | IMPLIES {: RESULT = new Atributos(String.class, "implies", ""); :};
 		
 RelationalOperator ::= MAIORQ
 					 | MAIORIGUAL
