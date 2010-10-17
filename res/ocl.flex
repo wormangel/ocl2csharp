@@ -20,7 +20,7 @@ import java_cup.runtime.*;
   }
   
   private int linha = 0;
-  private boolean debug = false;
+  private boolean debug = true;
   
 %}
 
