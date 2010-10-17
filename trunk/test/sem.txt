@@ -1,5 +1,14 @@
-context cliente
+context ParceiroPrograma
 inv c: true and true
 
-context cliente
-inv c: xxx and false
+--  propriedade que nao existe
+--context Conta
+--inv c: xxx and false
+
+-- propriedade que nao eh boolean
+--context Conta
+--inv c: pontos and false
+
+--propriedade que eh boolean
+context Conta
+inv c: estaVazia and false
