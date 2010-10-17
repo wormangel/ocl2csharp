@@ -94,7 +94,7 @@ OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
 ClassifierContext ::= ID:i DOISPONTOS ID
 					{:
 						if (!XmiParser.isValidClass(i.Value.toString())) {
-							System.err.println("\nErro semantico.\nClassifierContext ::= ID:i DOISPONTOS ID");
+							System.err.println("\nErro semantico.\nClassifierContext ::= ID DOISPONTOS ID");
 							System.err.println("Classe nao existe: " + i.Value);
 							System.exit(0);
 						} else {
@@ -104,7 +104,7 @@ ClassifierContext ::= ID:i DOISPONTOS ID
 					| ID:i
 					{:
 						if (!XmiParser.isValidClass(i.Value.toString())){
-								System.err.println("\nErro semantico.\nClassifierContext ::= ID:i");
+								System.err.println("\nErro semantico.\nClassifierContext ::= ID");
 								System.err.println("Classe nao existe: " + i.Value);
 								System.exit(0);
 						} else {
@@ -120,7 +120,7 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2
 				{:
 				if (e1.Type != Boolean.class || e2.Type != Boolean.class){
-					System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2");
+					System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression LogicalOperator LogicalExpression");
 					System.err.println("Operandos devem ser do tipo boolean.");
 					System.exit(-1);
 				} else {
@@ -133,7 +133,7 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 				{:
 				if ( (o.Value.equals("==")) || (o.Value.equals("!=")) ){
 					if (e1.Type != e2.Type) {
-						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e1");
+						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 						System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
 						System.exit(-1);
 					} else {
@@ -146,7 +146,7 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 							    (e1.Type == Double.class && e2.Type == Double.class) ){
 					    RESULT = new Atributos(Double.class, null, "");
 				    } else {
-						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e1");
+						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 						System.err.println("Operandos devem ser numeros inteiros ou reais.");
 						System.exit(-1);			
 					}
@@ -154,10 +154,34 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 				:};
 				
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
-				| MultiplicativeExpression AddOperator AdditiveExpression;
+				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
+				{:
+				if (e1.Type == Integer.class && e2.Type == Integer.class) {
+					RESULT = new Atributos(Integer.class, null, "");
+				} else if ( (e1.Type == Integer.class && e2.Type == Double.class) || (e1.Type == Double.class && e2.Type == Integer.class) ||
+						    (e1.Type == Double.class && e2.Type == Double.class) ){
+				    RESULT = new Atributos(Double.class, null, "");
+			    } else {
+					System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+					System.err.println("Operandos devem ser numeros inteiros ou reais.");
+					System.exit(-1);			
+				}
+				:};
 				
 MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
-				| UnaryExpression MultiplyOperator MultiplicativeExpression;
+				| UnaryExpression:e1 MultiplyOperator:o MultiplicativeExpression:e2
+				{:
+				if (e1.Type == Integer.class && e2.Type == Integer.class) {
+					RESULT = new Atributos(Integer.class, null, "");
+				} else if ( (e1.Type == Integer.class && e2.Type == Double.class) || (e1.Type == Double.class && e2.Type == Integer.class) ||
+						    (e1.Type == Double.class && e2.Type == Double.class) ){
+				    RESULT = new Atributos(Double.class, null, "");
+			    } else {
+					System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+					System.err.println("Operandos devem ser numeros inteiros ou reais.");
+					System.exit(-1);			
+				}
+				:};
 				
 UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 				| UnaryOperator UnaryExpression
@@ -230,7 +254,15 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 				
-PathName ::= ID:i {: RESULT = new Atributos(XmiParser.getType(currentContext, i.Value.toString()),i.Value,""); :}
+PathName ::= ID:i 
+			{:  if (!XmiParser.isValidPath(currentContext, i.Value.toString())){
+					System.err.println("\nErro semantico.\nPathName ::= ID");
+					System.err.println("Identificador invalido.");
+					System.exit(-1);
+				} else {
+					RESULT = new Atributos(XmiParser.getType(currentContext, i.Value.toString()),i.Value,""); 
+				}
+			:}
 		   | ID PONTO PathName
 		   | ID QUATROPONTOS PathName;
 		
