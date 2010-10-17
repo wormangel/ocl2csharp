@@ -12,3 +12,6 @@ inv c: true and true
 --propriedade que eh boolean
 context Conta
 inv c: estaVazia and false
+
+context Conta
+inv c: 3 > pontos
