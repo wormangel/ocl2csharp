@@ -1,2 +1,5 @@
 context cliente
-inv c: x and false
+inv c: true and false
+
+context cliente
+inv c: xxx and false

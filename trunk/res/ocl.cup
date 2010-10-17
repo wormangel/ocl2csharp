@@ -88,10 +88,10 @@ OCLExpression ::= LogicalExpression:e {: RESULT = e; :};
 LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2
 				{:
-					if (e1.Type != Boolean.class || e2.Type != Boolean.class) {
-						System.out.println("\n\nsemantico:\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e1");
-						
-					}
+				if (e1.Type != Boolean.class || e2.Type != Boolean.class){
+					System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2");
+					System.exit(-1);
+				}
 				:};
 				
 RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}  
@@ -114,7 +114,7 @@ PrimaryExpression ::= LiteralCollection:c {: RESULT = c; :}
 
 LiteralCollection ::= Number:n 		{: RESULT = n; :}
 					| BoolValue:b 	{: RESULT = b; :}
-					| STRING:s  	{: RESULT = new Atributos(String.class, s.Value, ""); :}
+					| STRING:s  	{: RESULT = s; :}
 					| PropertyCall:p 	{: RESULT = p; :};
 				
 IfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF;		
@@ -162,7 +162,7 @@ TypeSpecifier ::= PathName
 		
 //Literais
 
-PropertyCall ::= PathName
+PropertyCall ::= PathName:p {: RESULT = p; :}
 				| PathName LPAREN RPAREN
 				| PathName LPAREN FormalParameters RPAREN
 				| PathName PONTO PropertyCall;
@@ -174,7 +174,7 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 				
-PathName ::= ID
+PathName ::= ID:i {: RESULT = i; :}
 		   | ID PONTO PathName
 		   | ID QUATROPONTOS PathName;
 		
