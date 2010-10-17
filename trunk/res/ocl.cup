@@ -189,7 +189,7 @@ UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 				
 PrimaryExpression ::= LiteralCollection:c {: RESULT = c; :}
 				| IfExpression
-				| LPAREN OCLExpression RPAREN
+				| LPAREN OCLExpression:c RPAREN {: RESULT = c; :}
 				| CollectionExpression;
 
 LiteralCollection ::= Number:n 		{: RESULT = n; :}
