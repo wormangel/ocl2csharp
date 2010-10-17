@@ -95,6 +95,7 @@ ClassifierContext ::= ID:i DOISPONTOS ID
 					{:
 						if (!XmiParser.isValidClass(i.Value.toString())) {
 							System.err.println("\nErro semantico.\nClassifierContext ::= ID:i DOISPONTOS ID");
+							System.err.println("Classe nao existe: " + i.Value);
 							System.exit(0);
 						} else {
 							RESULT = new Atributos(String.class, i.Value.toString(), null);
@@ -104,6 +105,7 @@ ClassifierContext ::= ID:i DOISPONTOS ID
 					{:
 						if (!XmiParser.isValidClass(i.Value.toString())){
 								System.err.println("\nErro semantico.\nClassifierContext ::= ID:i");
+								System.err.println("Classe nao existe: " + i.Value);
 								System.exit(0);
 						} else {
 							RESULT = new Atributos(String.class, i.Value.toString(), null);
@@ -119,22 +121,37 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				{:
 				if (e1.Type != Boolean.class || e2.Type != Boolean.class){
 					System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2");
+					System.err.println("Operandos devem ser do tipo boolean.");
 					System.exit(-1);
 				} else {
-					if (o.Value.equals("&&")) {
-						RESULT = new Atributos(Boolean.class, null, "");
-					} else if (o.Value.equals("||")) {
-						RESULT = new Atributos(Boolean.class, null, "");
-					} else if (o.Value.equals("^")) {
-						RESULT = new Atributos(Boolean.class, null, "");
-					} else if (o.Value.equals("imples")) {
-						RESULT = new Atributos(Boolean.class, null, "");
-					}					
+					RESULT = new Atributos(Boolean.class, null, "");				
 				}
 				:};
 				
 RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}  
-				| AdditiveExpression RelationalOperator RelationalExpression;
+				| AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e2
+				{:
+				if ( (o.Value.equals("==")) || (o.Value.equals("!=")) ){
+					if (e1.Type != e2.Type) {
+						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e1");
+						System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
+						System.exit(-1);
+					} else {
+						RESULT = new Atributos(e1.Type, null, "");
+					}
+				} else {
+					if (e1.Type == Integer.class && e2.Type == Integer.class) {
+						RESULT = new Atributos(Integer.class, null, "");
+					} else if ( (e1.Type == Integer.class && e2.Type == Double.class) || (e1.Type == Double.class && e2.Type == Integer.class) ||
+							    (e1.Type == Double.class && e2.Type == Double.class) ){
+					    RESULT = new Atributos(Double.class, null, "");
+				    } else {
+						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e1");
+						System.err.println("Operandos devem ser numeros inteiros ou reais.");
+						System.exit(-1);			
+					}
+				}
+				:};
 				
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression AddOperator AdditiveExpression;
@@ -230,12 +247,12 @@ LogicalOperator ::= AND {: RESULT = new Atributos(String.class, "&&", ""); :}
 				  | XOR {: RESULT = new Atributos(String.class, "^", ""); :}
 				  | IMPLIES {: RESULT = new Atributos(String.class, "implies", ""); :};
 		
-RelationalOperator ::= MAIORQ
-					 | MAIORIGUAL
-					 | MENORQ
-					 | MENORIGUAL
-					 | IGUAL
-					 | DIFF;
+RelationalOperator ::= MAIORQ{: RESULT = new Atributos(String.class,">",">");:} 
+					 | MAIORIGUAL{: RESULT = new Atributos(String.class,">=",">=");:} 
+					 | MENORQ{: RESULT = new Atributos(String.class,"<","<");:} 
+					 | MENORIGUAL{: RESULT = new Atributos(String.class,"<=","<=");:} 
+					 | IGUAL{: RESULT = new Atributos(String.class,"==","==");:} 
+					 | DIFF{: RESULT = new Atributos(String.class,"!=","!=");:};
 
 AddOperator ::= MAIS | MENOS;
 MultiplyOperator ::= VEZES | DIVIDIR;
