@@ -1,4 +1,15 @@
 import java_cup.runtime.*;
+import xmiParser.*;
+
+action code {:
+	private String currentContext;
+	private String fullContext;
+	
+	private String getClassContext(String fullContext) {
+		int index = fullContext.indexOf("::");
+		return fullContext.substring(0,index);				
+	}
+:}
 
 /* Terminais  */
 
@@ -57,10 +68,10 @@ OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				
 OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration ContextBody;
+Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; :};
 
-ContextDeclaration ::= CONTEXT OperationContext
-					 | CONTEXT ClassifierContext;
+ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
+					 | CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
 				
 ContextBody ::= InvExpression
 			  | PreExpression;
@@ -75,11 +86,29 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 				| PRE DOISPONTOS OCLExpression POS DOISPONTOS OCLExpression
 				| PRE ID: DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression;
 
-OperationContext ::= ID QUATROPONTOS PropertyCall
-				   | ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier;
+OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
+					{: RESULT = new Atributos(String.class, i.Value.toString() + "::" + p.Value.toString(), ""); :}
+				   | ID:i QUATROPONTOS PropertyCall:p DOISPONTOS TypeSpecifier:t
+				   	{: RESULT = new Atributos(String.class, i.Value.toString() + "::" + p.Value.toString() + ":" + t.Value.toString(), ""); :};
 				
-ClassifierContext ::= ID DOISPONTOS ID
-					| ID;
+ClassifierContext ::= ID:i DOISPONTOS ID
+					{:
+						if (!XmiParser.isValidClass(i.Value.toString())) {
+							System.err.println("\nErro semantico.\nClassifierContext ::= ID:i DOISPONTOS ID");
+							System.exit(0);
+						} else {
+							RESULT = new Atributos(String.class, i.Value.toString(), null);
+						}
+					:}
+					| ID:i
+					{:
+						if (!XmiParser.isValidClass(i.Value.toString())){
+								System.err.println("\nErro semantico.\nClassifierContext ::= ID:i");
+								System.exit(0);
+						} else {
+							RESULT = new Atributos(String.class, i.Value.toString(), null);
+						}
+					:} ;
 
 // Expressões 
 
@@ -93,13 +122,13 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 					System.exit(-1);
 				} else {
 					if (o.Value.equals("&&")) {
-						RESULT = new Atributos(Boolean.class, (Boolean)e1.Value && (Boolean)e2.Value, "");
+						RESULT = new Atributos(Boolean.class, null, "");
 					} else if (o.Value.equals("||")) {
-						RESULT = new Atributos(Boolean.class, (Boolean)e1.Value || (Boolean)e2.Value, "");
+						RESULT = new Atributos(Boolean.class, null, "");
 					} else if (o.Value.equals("^")) {
-						RESULT = new Atributos(Boolean.class, (Boolean)e1.Value ^ (Boolean)e2.Value, "");
+						RESULT = new Atributos(Boolean.class, null, "");
 					} else if (o.Value.equals("imples")) {
-						RESULT = new Atributos(Boolean.class, !(Boolean)e1.Value || (Boolean)e2.Value, "");
+						RESULT = new Atributos(Boolean.class, null, "");
 					}					
 				}
 				:};
@@ -163,12 +192,12 @@ CollectionParameters ::= PropertyCall
 
 //Tipos
 
-TypeSpecifier ::= PathName
-		| INTTYPE
-		| REALTYPE
-		| VOID
-		| STRING
-		| BOOLEAN;
+TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
+		| INTTYPE{: RESULT = new Atributos(null,"int","int");:} 
+		| REALTYPE{: RESULT = new Atributos(null,"double","double");:} 
+		| VOID{: RESULT = new Atributos(null,"void","void");:} 
+		| STRING{: RESULT = new Atributos(null,"string","string");:}
+		| BOOLEAN{: RESULT = new Atributos(null,"boolean","boolean");:} ;
 		
 //Literais
 
@@ -184,7 +213,7 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 				
-PathName ::= ID:i {: RESULT = i; :}
+PathName ::= ID:i {: RESULT = new Atributos(XmiParser.getType(currentContext, i.Value.toString()),i.Value,""); :}
 		   | ID PONTO PathName
 		   | ID QUATROPONTOS PathName;
 		
