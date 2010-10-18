@@ -14,4 +14,4 @@ context Conta
 inv c: estaVazia and false
 
 context Conta
-inv c: 4 + (pontos + 5)
+inv c: if (estaVazia) then (true) else (true) endif
