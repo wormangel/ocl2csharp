@@ -197,7 +197,14 @@ LiteralCollection ::= Number:n 		{: RESULT = n; :}
 					| STRING:s  	{: RESULT = s; :}
 					| PropertyCall:p 	{: RESULT = p; :};
 				
-IfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF;		
+IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression ELSE LogicalExpression ENDIF
+				{:
+					if (e1.Type != Boolean.class) {
+						System.err.println("\nErro semantico.\nIfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF");
+						System.err.println("Condicao deve ser boolean.");
+						System.exit(-1);	
+					}
+				:};		
 
 //Expressões em coleções	
 			
