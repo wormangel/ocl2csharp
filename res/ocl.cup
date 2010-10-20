@@ -2,6 +2,14 @@ import java_cup.runtime.*;
 import xmiParser.*;
 
 action code {:
+	
+	private final int INCLUDES = 1;
+	private final int EXCLUDES = 2;
+	private final int EXISTS = 3;
+	private final int FORALL = 4;
+	private final int SELECT = 5;
+	private final int SIZE = 6; 
+			
 	private String currentContext;
 	private String fullContext;
 	
@@ -87,9 +95,9 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 				| PRE ID: DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression;
 
 OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
-					{: RESULT = new Atributos(String.class, i.Value.toString() + "::" + p.Value.toString(), ""); :}
+					{: RESULT = new Atributos("string", i.Value.toString() + "::" + p.Value.toString(), ""); :}
 				   | ID:i QUATROPONTOS PropertyCall:p DOISPONTOS TypeSpecifier:t
-				   	{: RESULT = new Atributos(String.class, i.Value.toString() + "::" + p.Value.toString() + ":" + t.Value.toString(), ""); :};
+				   	{: RESULT = new Atributos("string", i.Value.toString() + "::" + p.Value.toString() + ":" + t.Value.toString(), ""); :};
 				
 ClassifierContext ::= ID:i DOISPONTOS ID
 					{:
@@ -98,7 +106,7 @@ ClassifierContext ::= ID:i DOISPONTOS ID
 							System.err.println("Classe nao existe: " + i.Value);
 							System.exit(0);
 						} else {
-							RESULT = new Atributos(String.class, i.Value.toString(), null);
+							RESULT = new Atributos("string", i.Value.toString(), null);
 						}
 					:}
 					| ID:i
@@ -108,7 +116,7 @@ ClassifierContext ::= ID:i DOISPONTOS ID
 								System.err.println("Classe nao existe: " + i.Value);
 								System.exit(0);
 						} else {
-							RESULT = new Atributos(String.class, i.Value.toString(), null);
+							RESULT = new Atributos("string", i.Value.toString(), null);
 						}
 					:} ;
 
@@ -119,12 +127,12 @@ OCLExpression ::= LogicalExpression:e {: RESULT = e; :};
 LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2
 				{:
-				if (e1.Type != Boolean.class || e2.Type != Boolean.class){
+				if (e1.Type != "boolean" || e2.Type != "boolean"){
 					System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression LogicalOperator LogicalExpression");
 					System.err.println("Operandos devem ser do tipo boolean.");
 					System.exit(-1);
 				} else {
-					RESULT = new Atributos(Boolean.class, null, "");				
+					RESULT = new Atributos("boolean", null, "");				
 				}
 				:};
 				
@@ -140,11 +148,11 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 						RESULT = new Atributos(e1.Type, null, "");
 					}
 				} else {
-					if (e1.Type == Integer.class && e2.Type == Integer.class) {
-						RESULT = new Atributos(Integer.class, null, "");
-					} else if ( (e1.Type == Integer.class && e2.Type == Double.class) || (e1.Type == Double.class && e2.Type == Integer.class) ||
-							    (e1.Type == Double.class && e2.Type == Double.class) ){
-					    RESULT = new Atributos(Double.class, null, "");
+					if (e1.Type == "integer" && e2.Type == "integer") {
+						RESULT = new Atributos("integer", null, "");
+					} else if ( (e1.Type == "integer" && e2.Type == "double") || (e1.Type == "double" && e2.Type == "integer") ||
+							    (e1.Type == "double" && e2.Type == "double") ){
+					    RESULT = new Atributos("double", null, "");
 				    } else {
 						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 						System.err.println("Operandos devem ser numeros inteiros ou reais.");
@@ -156,11 +164,11 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
 				{:
-				if (e1.Type == Integer.class && e2.Type == Integer.class) {
-					RESULT = new Atributos(Integer.class, null, "");
-				} else if ( (e1.Type == Integer.class && e2.Type == Double.class) || (e1.Type == Double.class && e2.Type == Integer.class) ||
-						    (e1.Type == Double.class && e2.Type == Double.class) ){
-				    RESULT = new Atributos(Double.class, null, "");
+				if (e1.Type == "integer" && e2.Type == "integer") {
+					RESULT = new Atributos("integer", null, "");
+				} else if ( (e1.Type == "integer" && e2.Type == "double") || (e1.Type == "double" && e2.Type == "integer") ||
+						    (e1.Type == "double" && e2.Type == "double") ){
+				    RESULT = new Atributos("double", null, "");
 			    } else {
 					System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 					System.err.println("Operandos devem ser numeros inteiros ou reais.");
@@ -171,11 +179,11 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				| UnaryExpression:e1 MultiplyOperator:o MultiplicativeExpression:e2
 				{:
-				if (e1.Type == Integer.class && e2.Type == Integer.class) {
-					RESULT = new Atributos(Integer.class, null, "");
-				} else if ( (e1.Type == Integer.class && e2.Type == Double.class) || (e1.Type == Double.class && e2.Type == Integer.class) ||
-						    (e1.Type == Double.class && e2.Type == Double.class) ){
-				    RESULT = new Atributos(Double.class, null, "");
+				if (e1.Type == "integer" && e2.Type == "integer") {
+					RESULT = new Atributos("integer", null, "");
+				} else if ( (e1.Type == "integer" && e2.Type == "double") || (e1.Type == "double" && e2.Type == "integer") ||
+						    (e1.Type == "double" && e2.Type == "double") ){
+				    RESULT = new Atributos("double", null, "");
 			    } else {
 					System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 					System.err.println("Operandos devem ser numeros inteiros ou reais.");
@@ -184,13 +192,50 @@ MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				:};
 				
 UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
-				| UnaryOperator UnaryExpression
-				| PrimaryExpression UnaryOperator UnaryExpression;
+				| UnaryOperator:o UnaryExpression:e
+				{:
+					if (o.Value.equals("not")){
+						if (e.Type != "boolean") {
+							System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
+							System.err.println("Operador de negacao (not) deve ser usado em expressões booleanas.");
+							System.exit(-1);
+						} else {
+							RESULT = new Atributos("boolean", null, "");
+						}
+					} else { // se for seta
+							System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
+							System.err.println("Operador seta só deve ser usado em coleções.");
+							System.exit(-1);
+					}
+				:}
+				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2
+				{:
+					if (o.Value.equals("->") && e1.Type != "collection") {
+						System.err.println("\nErro semantico.\nUnaryExpression ::= PrimaryExpression UnaryOperator UnaryExpression");
+						System.err.println("Operador seta só deve ser usado em coleções.");
+						System.exit(-1);
+					} else {
+						switch (e2.ColKind) {
+							case INCLUDES:
+							case EXCLUDES:
+							case EXISTS: 
+							case FORALL:
+								RESULT = new Atributos("boolean", null, "", e2.ColKind);
+								break;
+							case SIZE:
+								RESULT = new Atributos("integer", null, "", e2.ColKind);
+								break;
+							case SELECT:
+								RESULT = new Atributos("collection", null, "", e2.ColKind);
+								break;
+						}
+					}
+				 :};
 				
 PrimaryExpression ::= LiteralCollection:c {: RESULT = c; :}
-				| IfExpression
+				| IfExpression:c {: RESULT = c; :}
 				| LPAREN OCLExpression:c RPAREN {: RESULT = c; :}
-				| CollectionExpression;
+				| CollectionExpression:c {: RESULT = c; :} ;
 
 LiteralCollection ::= Number:n 		{: RESULT = n; :}
 					| BoolValue:b 	{: RESULT = b; :}
@@ -199,43 +244,71 @@ LiteralCollection ::= Number:n 		{: RESULT = n; :}
 				
 IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression ELSE LogicalExpression ENDIF
 				{:
-					if (e1.Type != Boolean.class) {
+					if (e1.Type != "boolean") {
 						System.err.println("\nErro semantico.\nIfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF");
 						System.err.println("Condicao deve ser boolean.");
 						System.exit(-1);	
 					}
+					RESULT = new Atributos(null, null, null);
 				:};		
 
 //Expressões em coleções	
 			
-CollectionExpression ::= CollectionOperations;
+CollectionExpression ::= CollectionOperations:c {: RESULT = c; :} ;
 
-CollectionOperations ::= SelectOperation
-				|ExistsOperation
-				|IncludesOperation
-				|ExcludesOperation
-				|ForAllOperation
-				|SizeOperation;
+CollectionOperations ::= SelectOperation:s {: RESULT = s; :}
+				|ExistsOperation:s {: RESULT = s; :}
+				|IncludesOperation:s {: RESULT = s; :}
+				|ExcludesOperation:s {: RESULT = s; :}
+				|ForAllOperation:s {: RESULT = s; :}
+				|SizeOperation:s {: RESULT = s; :};
 				
 SelectOperation ::= SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
+				{: RESULT = new Atributos("collection", null, "", SELECT); :}
 				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| SELECT LPAREN OCLExpression RPAREN;
+				{: RESULT = new Atributos("collection", null, "", SELECT); :}
+				| SELECT LPAREN OCLExpression RPAREN
+				{: RESULT = new Atributos("collection", null, "", SELECT); :};
 
 ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
+					{: RESULT = new Atributos("boolean", null, "", EXISTS); :}
 				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| EXISTS LPAREN OCLExpression RPAREN;
+				{: RESULT = new Atributos("boolean", null, "", EXISTS); :}
+				| EXISTS LPAREN OCLExpression RPAREN
+				{: RESULT = new Atributos("boolean", null, "", EXISTS); :};
 
-IncludesOperation ::= INCLUDES LPAREN ID RPAREN;
+IncludesOperation ::= INCLUDES LPAREN ID:i RPAREN
+					{:
+						if (!XmiParser.isValidPath(currentContext, i.Value.toString())){
+							System.err.println("\nErro semantico.\nPathName ::= ID");
+							System.err.println("Identificador invalido.");
+							System.exit(-1);
+						} else {
+							RESULT = new Atributos("boolean", null, "", INCLUDES);
+						}
+					:};	
 
-ExcludesOperation ::= EXCLUDES LPAREN ID RPAREN;
+ExcludesOperation ::= EXCLUDES LPAREN ID:i RPAREN
+					{:
+						if (!XmiParser.isValidPath(currentContext, i.Value.toString())){
+							System.err.println("\nErro semantico.\nPathName ::= ID");
+							System.err.println("Identificador invalido.");
+							System.exit(-1);
+						} else {
+							RESULT = new Atributos("boolean", null, "", EXCLUDES);
+						}
+					:};
 
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
+				{: RESULT = new Atributos("boolean", null, "", SELECT); :}
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| FORALL LPAREN OCLExpression RPAREN;
+				{: RESULT = new Atributos("boolean", null, "", SELECT); :}
+				| FORALL LPAREN OCLExpression RPAREN
+				{: RESULT = new Atributos("boolean", null, "", SELECT); :};
 
-SizeOperation ::= SIZE LPAREN RPAREN;
+SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos("integer", null, "", SIZE); :};
 
-CollectionParameters ::= PropertyCall
+CollectionParameters ::= PropertyCall:p {: RESULT = p; :}
 				| PropertyCall VIRGULA CollectionParameters;
 
 //Tipos
@@ -250,7 +323,7 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 //Literais
 
 PropertyCall ::= PathName:p {: RESULT = p; :}
-				| PathName LPAREN RPAREN
+				| PathName:p LPAREN RPAREN {: RESULT = p; :}
 				| PathName LPAREN FormalParameters RPAREN
 				| PathName PONTO PropertyCall;
 				
@@ -273,26 +346,31 @@ PathName ::= ID:i
 		   | ID PONTO PathName
 		   | ID QUATROPONTOS PathName;
 		
-Number ::= INTEGER:i {: RESULT = new Atributos(Integer.class, Integer.parseInt(i.Value.toString()), ""); :}
-			| REAL:r {: RESULT = new Atributos(Double.class, Double.parseDouble(r.Value.toString()), ""); :};
+Number ::= INTEGER:i {: RESULT = new Atributos("integer", Integer.parseInt(i.Value.toString()), ""); :}
+			| REAL:r {: RESULT = new Atributos("double", Double.parseDouble(r.Value.toString()), ""); :};
 
-BoolValue ::= TRUE:t {: RESULT = new Atributos(Boolean.class, t.Value, ""); :}
-			| FALSE:f {: RESULT = new Atributos(Boolean.class, f.Value, ""); :};
+BoolValue ::= TRUE:t {: RESULT = new Atributos("boolean", t.Value, ""); :}
+			| FALSE:f {: RESULT = new Atributos("boolean", f.Value, ""); :};
 		
 // Operadores
 
-LogicalOperator ::= AND {: RESULT = new Atributos(String.class, "&&", ""); :}
-				  | OR {: RESULT = new Atributos(String.class, "||", ""); :}
-				  | XOR {: RESULT = new Atributos(String.class, "^", ""); :}
-				  | IMPLIES {: RESULT = new Atributos(String.class, "implies", ""); :};
+LogicalOperator ::= AND {: RESULT = new Atributos("string", "&&", ""); :}
+				  | OR {: RESULT = new Atributos("string", "||", ""); :}
+				  | XOR {: RESULT = new Atributos("string", "^", ""); :}
+				  | IMPLIES {: RESULT = new Atributos("string", "implies", ""); :};
 		
-RelationalOperator ::= MAIORQ{: RESULT = new Atributos(String.class,">",">");:} 
-					 | MAIORIGUAL{: RESULT = new Atributos(String.class,">=",">=");:} 
-					 | MENORQ{: RESULT = new Atributos(String.class,"<","<");:} 
-					 | MENORIGUAL{: RESULT = new Atributos(String.class,"<=","<=");:} 
-					 | IGUAL{: RESULT = new Atributos(String.class,"==","==");:} 
-					 | DIFF{: RESULT = new Atributos(String.class,"!=","!=");:};
+RelationalOperator ::= MAIORQ{: RESULT = new Atributos("string",">",">");:} 
+					 | MAIORIGUAL{: RESULT = new Atributos("string",">=",">=");:} 
+					 | MENORQ{: RESULT = new Atributos("string","<","<");:} 
+					 | MENORIGUAL{: RESULT = new Atributos("string","<=","<=");:} 
+					 | IGUAL{: RESULT = new Atributos("string","==","==");:} 
+					 | DIFF{: RESULT = new Atributos("string","!=","!=");:};
 
-AddOperator ::= MAIS | MENOS;
-MultiplyOperator ::= VEZES | DIVIDIR;
-UnaryOperator ::= NOT | SETA;
+AddOperator ::= MAIS {: RESULT = new Atributos("string","+","");:}
+				| MENOS {: RESULT = new Atributos("string","-","");:};
+				
+MultiplyOperator ::= VEZES {: RESULT = new Atributos("string","*","*"); :}
+				| DIVIDIR {: RESULT = new Atributos("string","/","/"); :};
+				
+UnaryOperator ::= NOT {: RESULT = new Atributos("string","not","");:}
+				| SETA {: RESULT = new Atributos("string","->","");:};

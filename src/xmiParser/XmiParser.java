@@ -31,8 +31,15 @@ public class XmiParser {
 	public static final String TYPE_INT = "int";
 	public static final String TYPE_STRING = "string";
 	public static final String TYPE_BOOLEAN = "bool";
+	
+	public static final String RETURN_TYPE_VOID = "void";
+	public static final String RETURN_TYPE_INT = "integer";
+	public static final String RETURN_TYPE_STRING = "string";
+	public static final String RETURN_TYPE_BOOLEAN = "boolean";
+	private static final String RETURN_TYPE_COLLECTION = "collection";
 
 	private final static String XMI_PATH = "test/xmi/profe.uml2";
+	
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		
@@ -43,6 +50,8 @@ public class XmiParser {
 		for (DomainClass c : fullParse()) {
 			System.out.println(c);
 		}
+		
+		System.out.println(getType("Cartao", "proprietario"));
 //		
 //		for (String string : listClasses()) {
 //			System.out.println("\n\n##### Classe: " + string);
@@ -609,8 +618,8 @@ public class XmiParser {
 	}
 
 
-	
-	public static Class<?> getType(String currentContext, String property) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException {
+	// Retorna o tipo de um atributo. Só vale para tipos simples.
+	public static String getType(String currentContext, String property) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException {
 		
 		if(!isValidPath(currentContext, property)){
 			return null;
@@ -627,50 +636,48 @@ public class XmiParser {
 		
 		XPathExpression expr;
 		
+		Object result = null;
+		
 		if (isValidAttribute(currentContext, property)){
 			expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedAttribute[@name='%s']", currentContext, property));
-			Object result = expr.evaluate(doc, XPathConstants.NODE);
-			if (result != null){
-				Node node = (Node) result;
-				if (node != null){
-					String type;
-					if(node.getAttributes().getNamedItem("type") != null){
-						type = getClassName(node.getAttributes().getNamedItem("type").getNodeValue());
-					} else {
-						Node nodoTipo = (Node) node.getFirstChild().getNextSibling();
-						type = getPrimitiveTypeName(nodoTipo.getAttributes().getNamedItem("href").getNodeValue());
-					}
-					if (type.equals(TYPE_INT)){
-						return Integer.class;
-					} else if (type.equals(TYPE_BOOLEAN)){
-						return Boolean.class;
-					} else if (type.equals(TYPE_STRING)){
-						return String.class;
-					}
-				}
-			}
+			result = expr.evaluate(doc, XPathConstants.NODE);
 		} else if (isValidOperation(currentContext, property)){
 			expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation[@name='%s']/returnResult", currentContext, property));
-			Object result = expr.evaluate(doc, XPathConstants.NODE);
-			if (result != null){
-				Node node = (Node) result;
-				if (node != null){
-					String type;
-					if(node.getAttributes().getNamedItem("type") != null){
-						type = getClassName(node.getAttributes().getNamedItem("type").getNodeValue());
-					} else {
-						Node nodoTipo = (Node) node.getFirstChild().getNextSibling();
-						type = getPrimitiveTypeName(nodoTipo.getAttributes().getNamedItem("href").getNodeValue());
+			result = expr.evaluate(doc, XPathConstants.NODE);
+		}
+		
+		if (result != null){
+			Node node = (Node) result;
+			if (node != null){
+				String type;
+				
+				// Coleção
+				if(node.hasChildNodes()){
+					Node filho = node.getFirstChild().getNextSibling();
+					if(filho != null){
+						if (filho.getAttributes().getNamedItem("xmi:type").getNodeValue().equals("uml:LiteralUnlimitedNatural")){
+							if(Integer.parseInt(filho.getAttributes().getNamedItem("value").getNodeValue()) == -1){
+								return RETURN_TYPE_COLLECTION;
+							}
+						}
 					}
-					if (type.equals(TYPE_INT)){
-						return Integer.class;
-					} else if (type.equals(TYPE_BOOLEAN)){
-						return Boolean.class;
-					} else if (type.equals(TYPE_STRING)){
-						return String.class;
-					}
+				}
+				
+				if(node.getAttributes().getNamedItem("type") != null){
+					type = getClassName(node.getAttributes().getNamedItem("type").getNodeValue());
 				} else {
-					return null;
+					Node filho = node.getFirstChild().getNextSibling();
+					type = getPrimitiveTypeName(filho.getAttributes().getNamedItem("href").getNodeValue());
+				}
+				
+				if (type.equals(TYPE_INT)){
+					return RETURN_TYPE_INT;
+				} else if (type.equals(TYPE_BOOLEAN)){
+					return RETURN_TYPE_BOOLEAN;
+				} else if (type.equals(TYPE_STRING)){
+					return RETURN_TYPE_STRING;
+				} else {
+					return type;
 				}
 			}
 		}

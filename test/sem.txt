@@ -13,5 +13,8 @@ inv c: true and true
 context Conta
 inv c: estaVazia and false
 
-context Conta
-inv c: if (estaVazia) then (true) else (true) endif
+context Cliente
+inv c: cartoes->size()
+
+context Cliente
+inv: cartoes->select(c < 3)
