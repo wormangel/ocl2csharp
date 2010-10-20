@@ -64,11 +64,11 @@ comment = [\-][\-]~[\r]
 
 // Expressões lógicas, relacionais e aritméticas
 
-"and"		{if(debug) System.out.print("( AND )"); return symbol(sym.AND, new Atributos(String.class, "and", "")); }
-"or"		{if(debug) System.out.print("( OR )"); return symbol(sym.OR, new Atributos(String.class, "or", "")); }
-"xor"		{if(debug) System.out.print("( XOR )"); return symbol(sym.XOR, new Atributos(String.class, "xor", "")); }
+"and"		{if(debug) System.out.print("( AND )"); return symbol(sym.AND, new Atributos("string", "and", "")); }
+"or"		{if(debug) System.out.print("( OR )"); return symbol(sym.OR, new Atributos("string", "or", "")); }
+"xor"		{if(debug) System.out.print("( XOR )"); return symbol(sym.XOR, new Atributos("string", "xor", "")); }
 "not"		{if(debug) System.out.print("( NOT )"); return symbol(sym.NOT); }
-"implies"	{if(debug) System.out.print("( IMPLIES )"); return symbol(sym.IMPLIES, new Atributos(String.class, "implies", "")); }
+"implies"	{if(debug) System.out.print("( IMPLIES )"); return symbol(sym.IMPLIES, new Atributos("string", "implies", "")); }
 
 // Coleções
 
@@ -86,8 +86,8 @@ comment = [\-][\-]~[\r]
 "integer"	{if(debug) System.out.print("( INTTYPE)"); return symbol(sym.INTTYPE); }
 "real"		{if(debug) System.out.print("( REALTYPE )"); return symbol(sym.REALTYPE); }
 "boolean"	{if(debug) System.out.print("( BOOLEAN )"); return symbol(sym.BOOLEAN); }
-"true"		{if(debug) System.out.print("( TRUE )"); return symbol(sym.TRUE, new Atributos(Boolean.class, true, "")); }
-"false"		{if(debug) System.out.print("( FALSE )"); return symbol(sym.FALSE, new Atributos(Boolean.class, false, "")); }
+"true"		{if(debug) System.out.print("( TRUE )"); return symbol(sym.TRUE, new Atributos("boolean", true, "")); }
+"false"		{if(debug) System.out.print("( FALSE )"); return symbol(sym.FALSE, new Atributos("boolean", false, "")); }
 "void"		{if(debug) System.out.print("( VOID )"); return symbol(sym.VOID); }
 
 // Sinais e operadores
@@ -126,9 +126,9 @@ comment = [\-][\-]~[\r]
 
 // Valores
 
-{id}		{if(debug) System.out.print("( ID , "+ yytext() + " )" ); return symbol(sym.ID, new Atributos(String.class, yytext(),"")); }
-{string}	{if(debug) System.out.print("( STR , "+yytext()+" )"  ); return symbol(sym.STRING, new Atributos(String.class, yytext(),"")); }
-{real}		{if(debug) System.out.print("( REAL , " +yytext()+" )"); return symbol(sym.REAL, new Atributos(Double.class, yytext(),"")); }
-{integer}	{if(debug) System.out.print("( INT , " +yytext()+" )"); return symbol(sym.INTEGER, new Atributos(Integer.class, yytext(),"")); }
+{id}		{if(debug) System.out.print("( ID , "+ yytext() + " )" ); return symbol(sym.ID, new Atributos("string", yytext(),"")); }
+{string}	{if(debug) System.out.print("( STR , "+yytext()+" )"  ); return symbol(sym.STRING, new Atributos("string", yytext(),"")); }
+{real}		{if(debug) System.out.print("( REAL , " +yytext()+" )"); return symbol(sym.REAL, new Atributos("double", yytext(),"")); }
+{integer}	{if(debug) System.out.print("( INT , " +yytext()+" )"); return symbol(sym.INTEGER, new Atributos("integer", yytext(),"")); }
 
 {comment}	{}
