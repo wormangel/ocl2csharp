@@ -25,3 +25,6 @@ inv: cartoes->exists(idade : integer | idade < 3)
 
 context Cliente
 inv teste: cartoes->forAll(3 < 4)
+
+context Cliente
+inv c: cartoes->includes(x)

@@ -402,15 +402,9 @@ ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier 
 				| EXISTS LPAREN OCLExpression RPAREN
 				{: RESULT = new Atributos("boolean", null, "", EXISTS); :};
 
-IncludesOperation ::= INCLUDES LPAREN ID:i RPAREN
+IncludesOperation ::= INCLUDES LPAREN ID RPAREN
 					{:
-						if (!XmiParser.isValidPath(currentContext, i.Value.toString())){
-							System.err.println("\nErro semantico.\nPathName ::= ID");
-							System.err.println("Identificador invalido.");
-							System.exit(-1);
-						} else {
-							RESULT = new Atributos("boolean", null, "", INCLUDES);
-						}
+						RESULT = new Atributos("boolean", null, "", INCLUDES);
 					:};	
 
 ExcludesOperation ::= EXCLUDES LPAREN ID:i RPAREN
