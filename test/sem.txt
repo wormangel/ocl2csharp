@@ -1,5 +1,8 @@
+context Cliente
+inv: blablabla < 3
+
 context ParceiroPrograma
-inv c: true and true
+inv c: true and 3
 
 --  propriedade que nao existe
 --context Conta
