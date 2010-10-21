@@ -13,8 +13,15 @@ inv c: true and true
 context Conta
 inv c: estaVazia and false
 
+-- operacao em colecao
 context Cliente
 inv c: cartoes->size()
 
 context Cliente
-inv: cartoes->select(c < 3)
+inv teste: cartoes->exists(c)
+
+context Cliente
+inv: cartoes->exists(idade : integer | idade < 3)
+
+context Cliente
+inv teste: cartoes->forAll(3 < 4)

@@ -127,7 +127,31 @@ OCLExpression ::= LogicalExpression:e {: RESULT = e; :};
 LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2
 				{:
-				if (e1.Type != "boolean" || e2.Type != "boolean"){
+				
+				String tipo1 = e1.Type;
+				String tipo2 = e2.Type;
+				
+				if(e1.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e1.Value.toString())){
+						System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo1 = XmiParser.getType(currentContext, e1.Value.toString());
+					}
+				}
+				
+				if(e2.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e2.Value.toString())){
+						System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo2 = XmiParser.getType(currentContext, e2.Value.toString());
+					}
+				}
+				
+				if (tipo1 != "boolean" || tipo2 != "boolean"){
 					System.err.println("\nErro semantico.\nLogicalExpression ::= RelationalExpression LogicalOperator LogicalExpression");
 					System.err.println("Operandos devem ser do tipo boolean.");
 					System.exit(-1);
@@ -139,19 +163,44 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}  
 				| AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e2
 				{:
+				
+				String tipo1 = e1.Type;
+				String tipo2 = e2.Type;
+				
+				if(e1.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e1.Value.toString())){
+						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo1 = XmiParser.getType(currentContext, e1.Value.toString());
+					}
+				}
+				
+				if(e2.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e2.Value.toString())){
+						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo2 = XmiParser.getType(currentContext, e2.Value.toString());
+					}
+				}
+				
+				
 				if ( (o.Value.equals("==")) || (o.Value.equals("!=")) ){
-					if (e1.Type != e2.Type) {
+					if (tipo1 != tipo2) {
 						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 						System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
 						System.exit(-1);
 					} else {
-						RESULT = new Atributos(e1.Type, null, "");
+						RESULT = new Atributos(tipo1, null, "");
 					}
 				} else {
-					if (e1.Type == "integer" && e2.Type == "integer") {
+					if (tipo1 == "integer" && tipo2 == "integer") {
 						RESULT = new Atributos("integer", null, "");
-					} else if ( (e1.Type == "integer" && e2.Type == "double") || (e1.Type == "double" && e2.Type == "integer") ||
-							    (e1.Type == "double" && e2.Type == "double") ){
+					} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
+							    (tipo1 == "double" && tipo2 == "double") ){
 					    RESULT = new Atributos("double", null, "");
 				    } else {
 						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
@@ -164,13 +213,38 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
 				{:
-				if (e1.Type == "integer" && e2.Type == "integer") {
+				
+				String tipo1 = e1.Type;
+				String tipo2 = e2.Type;
+				
+				if(e1.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e1.Value.toString())){
+						System.err.println("\nErro semantico.\nAdditiveExpression ::= MultiplicativeExpression AddOperator AdditiveExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo1 = XmiParser.getType(currentContext, e1.Value.toString());
+					}
+				}
+				
+				if(e2.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e2.Value.toString())){
+						System.err.println("\nErro semantico.\nAdditiveExpression ::= MultiplicativeExpression AddOperator AdditiveExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo2 = XmiParser.getType(currentContext, e2.Value.toString());
+					}
+				}
+				
+				
+				if (tipo1 == "integer" && tipo2 == "integer") {
 					RESULT = new Atributos("integer", null, "");
-				} else if ( (e1.Type == "integer" && e2.Type == "double") || (e1.Type == "double" && e2.Type == "integer") ||
-						    (e1.Type == "double" && e2.Type == "double") ){
+				} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
+						    (tipo1 == "double" && tipo2 == "double") ){
 				    RESULT = new Atributos("double", null, "");
 			    } else {
-					System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+					System.err.println("\nErro semantico.\nAdditiveExpression ::= MultiplicativeExpression AddOperator AdditiveExpression");
 					System.err.println("Operandos devem ser numeros inteiros ou reais.");
 					System.exit(-1);			
 				}
@@ -179,13 +253,37 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				| UnaryExpression:e1 MultiplyOperator:o MultiplicativeExpression:e2
 				{:
-				if (e1.Type == "integer" && e2.Type == "integer") {
+				
+				String tipo1 = e1.Type;
+				String tipo2 = e2.Type;
+				
+				if(e1.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e1.Value.toString())){
+						System.err.println("\nErro semantico.\nMultiplicativeExpression ::= UnaryExpression MultiplyOperator MultiplicativeExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo1 = XmiParser.getType(currentContext, e1.Value.toString());
+					}
+				}
+				
+				if(e2.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e2.Value.toString())){
+						System.err.println("\nErro semantico.\nMultiplicativeExpression ::= UnaryExpression MultiplyOperator MultiplicativeExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo2 = XmiParser.getType(currentContext, e2.Value.toString());
+					}
+				}
+				
+				if (tipo1 == "integer" && tipo2 == "integer") {
 					RESULT = new Atributos("integer", null, "");
-				} else if ( (e1.Type == "integer" && e2.Type == "double") || (e1.Type == "double" && e2.Type == "integer") ||
-						    (e1.Type == "double" && e2.Type == "double") ){
+				} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
+						    (tipo1 == "double" && tipo2 == "double") ){
 				    RESULT = new Atributos("double", null, "");
 			    } else {
-					System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+					System.err.println("\nErro semantico.\nMultiplicativeExpression ::= UnaryExpression MultiplyOperator MultiplicativeExpression");
 					System.err.println("Operandos devem ser numeros inteiros ou reais.");
 					System.exit(-1);			
 				}
@@ -194,28 +292,55 @@ MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 				| UnaryOperator:o UnaryExpression:e
 				{:
-					if (o.Value.equals("not")){
-						if (e.Type != "boolean") {
-							System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
-							System.err.println("Operador de negacao (not) deve ser usado em expressões booleanas.");
-							System.exit(-1);
-						} else {
-							RESULT = new Atributos("boolean", null, "");
-						}
-					} else { // se for seta
-							System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
-							System.err.println("Operador seta só deve ser usado em coleções.");
-							System.exit(-1);
-					}
-				:}
-				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2
-				{:
-					if (o.Value.equals("->") && e1.Type != "collection") {
-						System.err.println("\nErro semantico.\nUnaryExpression ::= PrimaryExpression UnaryOperator UnaryExpression");
-						System.err.println("Operador seta só deve ser usado em coleções.");
+				
+				String tipo = e.Type;
+				
+				if(e.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e.Value.toString())){
+						System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
+						System.err.println("Identificador invalido.");
 						System.exit(-1);
 					} else {
-						switch (e2.ColKind) {
+						tipo = XmiParser.getType(currentContext, e.Value.toString());
+					}
+				}
+				
+				if (o.Value.equals("not")){
+					if (tipo != "boolean") {
+						System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
+						System.err.println("Operador de negacao (not) deve ser usado em expressões booleanas.");
+						System.exit(-1);
+					} else {
+						RESULT = new Atributos("boolean", null, "");
+					}
+				} else { // se for seta
+						System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
+						System.err.println("Operador seta só deve ser usado em coleções.");
+						System.exit(-1);
+				}
+				:}
+				
+				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2
+				{:
+				
+				String tipo = e1.Type;
+				
+				if(e1.Type == "id"){
+					if (!XmiParser.isValidPath(currentContext, e1.Value.toString())){
+						System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
+						System.err.println("Identificador invalido.");
+						System.exit(-1);
+					} else {
+						tipo = XmiParser.getType(currentContext, e1.Value.toString());
+					}
+				}
+			
+				if (o.Value.equals("->") && tipo != "collection") {
+					System.err.println("\nErro semantico.\nUnaryExpression ::= PrimaryExpression UnaryOperator UnaryExpression");
+					System.err.println("Operador seta só deve ser usado em coleções.");
+					System.exit(-1);
+				} else {
+					switch (e2.ColKind) {
 							case INCLUDES:
 							case EXCLUDES:
 							case EXISTS: 
@@ -229,13 +354,13 @@ UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 								RESULT = new Atributos("collection", null, "", e2.ColKind);
 								break;
 						}
-					}
-				 :};
+				}
+				:};
 				
 PrimaryExpression ::= LiteralCollection:c {: RESULT = c; :}
 				| IfExpression:c {: RESULT = c; :}
 				| LPAREN OCLExpression:c RPAREN {: RESULT = c; :}
-				| CollectionExpression:c {: RESULT = c; :} ;
+				| CollectionExpression:c {: RESULT = c; :};
 
 LiteralCollection ::= Number:n 		{: RESULT = n; :}
 					| BoolValue:b 	{: RESULT = b; :}
@@ -309,7 +434,8 @@ ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier 
 SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos("integer", null, "", SIZE); :};
 
 CollectionParameters ::= PropertyCall:p {: RESULT = p; :}
-				| PropertyCall VIRGULA CollectionParameters;
+				| PropertyCall VIRGULA CollectionParameters;		
+				
 
 //Tipos
 
@@ -335,13 +461,7 @@ FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 				
 PathName ::= ID:i 
-			{:  if (!XmiParser.isValidPath(currentContext, i.Value.toString())){
-					System.err.println("\nErro semantico.\nPathName ::= ID");
-					System.err.println("Identificador invalido.");
-					System.exit(-1);
-				} else {
-					RESULT = new Atributos(XmiParser.getType(currentContext, i.Value.toString()),i.Value,""); 
-				}
+			{: 	RESULT = new Atributos("id",i.Value,""); 
 			:}
 		   | ID PONTO PathName
 		   | ID QUATROPONTOS PathName;
