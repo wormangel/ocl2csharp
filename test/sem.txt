@@ -1,3 +1,25 @@
+context Cartao inv:
+4 = 3
+
+--context ProgramaFidelidade inv:
+--socio.conta > 0
+
+context Cliente inv:
+cartoes->size() > 1
+
+context ProgramaFidelidade::cadastrar(c:Cliente)
+pre: cliente->includes(c)
+pos: cliente->includes(c)
+
+--context Cliente inv:
+--cartoes->size() > 1
+
+
+-- result, select, self, path (com metodo) no context, pontos = 5+6, pre e pos, inv (BOOLEAN!!)
+
+
+
+--
 context Cliente
 inv: blablabla < 3
 

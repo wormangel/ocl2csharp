@@ -51,7 +51,7 @@ public class XmiParser {
 			System.out.println(c);
 		}
 		
-		System.out.println(getType("Cartao", "proprietario"));
+		System.out.println(isValidPath("ProgramaFidelidade", "socio"));
 //		
 //		for (String string : listClasses()) {
 //			System.out.println("\n\n##### Classe: " + string);
@@ -572,7 +572,7 @@ public class XmiParser {
 	// Recupera o nome da classe de um atributo-associacao (parceiros - ParceiroPrograma, por exemplo) ou retorna o nome do atributo como foi passado se a dada
 	// classe nao for associacao
 	// Nao deve ser invocado diretamente, apenas no local esperado (nao faz checagem de existencia de classe - propenso a erros)
-	private static String getAssociationName(String context, String attribute) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException {
+	public static String getAssociationName(String context, String attribute) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException {
 
 		
 		if(!isValidAssociation(context, attribute))
