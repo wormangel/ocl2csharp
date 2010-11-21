@@ -51,7 +51,7 @@ public class XmiParser {
 			System.out.println(c);
 		}
 		
-		System.out.println(isValidPath("ProgramaFidelidade", "socio"));
+		System.out.println(getType("Conta", "pontos"));
 //		
 //		for (String string : listClasses()) {
 //			System.out.println("\n\n##### Classe: " + string);

@@ -1,5 +1,5 @@
-context Cartao inv:
-4 = 3
+context Conta inv:
+pontos = 5 + 6
 
 --context ProgramaFidelidade inv:
 --socio.conta > 0
@@ -7,7 +7,7 @@ context Cartao inv:
 context Cliente inv:
 cartoes->size() > 1
 
-context ProgramaFidelidade::cadastrar(c:Cliente)
+context ProgramaFidelidade::cadastrar(c:Cliente):boolean
 pre: cliente->includes(c)
 pos: cliente->includes(c)
 

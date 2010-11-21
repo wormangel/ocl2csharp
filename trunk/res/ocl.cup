@@ -189,12 +189,25 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 				
 				
 				if ( (o.Value.equals("==")) || (o.Value.equals("!=")) ){
-					if (tipo1 != tipo2) {
-						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
-						System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
-						System.exit(-1);
-					} else {
-						RESULT = new Atributos(tipo1, null, "");
+				
+					// Numeros
+					
+					if (tipo1 == "integer" && tipo2 == "integer") {
+						RESULT = new Atributos("integer", null, "");
+					} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
+							    (tipo1 == "double" && tipo2 == "double") ){
+					    RESULT = new Atributos("double", null, "");
+				    } else {
+				    
+				    	// Outros tipos
+				    	
+						if (tipo1 != tipo2) {
+							System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
+							System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
+							System.exit(-1);
+						} else {
+							RESULT = new Atributos(tipo1, null, "");
+						}
 					}
 				} else {
 					if (tipo1 == "integer" && tipo2 == "integer") {
