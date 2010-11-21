@@ -410,7 +410,7 @@ IncludesOperation ::= INCLUDES LPAREN ID RPAREN
 ExcludesOperation ::= EXCLUDES LPAREN ID:i RPAREN
 					{:
 						if (!XmiParser.isValidPath(currentContext, i.Value.toString())){
-							System.err.println("\nErro semantico.\nPathName ::= ID");
+							System.err.println("\nErro semantico.\nExcludesOperation ::= EXCLUDES LPAREN ID RPAREN");
 							System.err.println("Identificador invalido.");
 							System.exit(-1);
 						} else {
@@ -445,7 +445,7 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 PropertyCall ::= PathName:p {: RESULT = p; :}
 				| PathName:p LPAREN RPAREN {: RESULT = p; :}
 				| PathName LPAREN FormalParameters RPAREN
-				| PathName PONTO PropertyCall;
+				| PathName:path PONTO PropertyCall:p {: RESULT = p; :};
 				
 				
 FormalParameters ::= FormalParameters VIRGULA FormalParameter
@@ -457,7 +457,16 @@ FormalParameter ::= ID DOISPONTOS TypeSpecifier
 PathName ::= ID:i 
 			{: 	RESULT = new Atributos("id",i.Value,""); 
 			:}
-		   | ID PONTO PathName
+		   | ID:i PONTO PathName:p 
+		   		{: 
+		   			if (!XmiParser.isValidPath(currentContext, i.Value.toString() + "." + p.Value.toString())){
+		   				System.err.println("\nErro semantico.\nPathName ::= ID");
+						System.err.println("Path invalido.");
+						System.exit(-1);
+		   			} else {
+		   				RESULT = new Atributos(XmiParser.getType(XmiParser.getAssociationName(currentContext, i.Value.toString()), p.Value.toString()), i.Value + "." + p.Value, "");	
+		   			}
+	   			:}	   		
 		   | ID QUATROPONTOS PathName;
 		
 Number ::= INTEGER:i {: RESULT = new Atributos("integer", Integer.parseInt(i.Value.toString()), ""); :}
