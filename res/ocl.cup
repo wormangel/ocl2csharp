@@ -13,6 +13,8 @@ action code {:
 	private String currentContext;
 	private String fullContext;
 	
+	private int numEntrada = 0;
+	
 	private String getClassContext(String fullContext) {
 		int index = fullContext.indexOf("::");
 		return fullContext.substring(0,index);				
@@ -73,7 +75,15 @@ action code {:
 	private int forAllCount = 0;
 	private String getForAllName() { forAllCount++; return "ForAll"+forAllCount; }
 	
+	// select
+	private int selectCount = 0;
+	private String getSelectName() { selectCount++; return "Select"+selectCount; } 
+	private String caller;
 	
+	// exists
+	private int existsCount = 0;
+	private String getExistsName() { existsCount++; return "Exists"+existsCount; }
+		
 :}
 
 /* Terminais  */
@@ -138,20 +148,33 @@ Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullCont
 ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
 					 | CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
 				
-ContextBody ::= InvExpression:i  {: System.out.println(i.Code); :}
-			  | PreExpression:p {: System.out.println(p.Code); :};
+ContextBody ::= InvExpression:i  {: numEntrada++; System.out.println(numEntrada + "\n"); System.out.println(i.Code); :}
+			  | PreExpression:p {: numEntrada++; System.out.println(numEntrada + "\n"); System.out.println(p.Code); :};
 				
 InvExpression ::= INV DOISPONTOS OCLExpression:e 
 				{: 
-					String code = "private void " + getInvName() + "() { " + 
+					if (e.Type != "boolean") {
+						System.err.println("\nErro semantico.\nInvExpression ::= INV DOISPONTOS OCLExpression");
+						System.err.println("Invariante deve ser boolean.");
+						System.exit(0);
+					} else {
+						String code = "private void " + getInvName() + "() { " + 
 						"if (!(" + e.Code +")) throw new Exception(\"Inv violada\");" + " }";
-					RESULT = new Atributos("boolean",null,code); 
+						RESULT = new Atributos("boolean",null,code);
+					}
+					 
 				:}
 				| INV ID:i DOISPONTOS OCLExpression:e
 				{:
-					String code = "private void checkInv" + i.Value.toString()+ "() { " + 
-						"if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }";
-		 			RESULT = new Atributos("boolean",null,code);
+					if (e.Type != "boolean") {
+						System.err.println("\nErro semantico.\nInvExpression ::= INV ID DOISPONTOS OCLExpression");
+						System.err.println("Invariante deve ser boolean.");
+						System.exit(0);
+					} else {
+						String code = "private void checkInv" + i.Value.toString()+ "() { " + 
+							"if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }";
+			 			RESULT = new Atributos("boolean",null,code);
+		 			}
 				:} ;
 
 PreExpression ::= PRE DOISPONTOS OCLExpression:e
@@ -307,7 +330,8 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 					System.err.println("Operandos devem ser do tipo boolean.");
 					System.exit(-1);
 				} else {
-					RESULT = new Atributos("boolean", null, "");				
+					String code = e1.Code + " " + o.Code + " " + e2.Code;
+					RESULT = new Atributos("boolean", null, code);				
 				}
 				:};
 				
@@ -338,16 +362,15 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 					}
 				}
 				
+				String code = e1.Code + " " + o.Code + " " + e2.Code;
 				
-				if ( (o.Value.equals("==")) || (o.Value.equals("!=")) ){
+				if ( (o.Value.equals("=")) || (o.Value.equals("!=")) ){
 				
 					// Numeros
 					
-					if (tipo1 == "integer" && tipo2 == "integer") {
-						RESULT = new Atributos("integer", null, "");
-					} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
-							    (tipo1 == "double" && tipo2 == "double") ){
-					    RESULT = new Atributos("double", null, "");
+					if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
+						 (tipo1 == "double" && tipo2 == "double") || (tipo1 == "integer" && tipo2 == "integer") ){
+					    RESULT = new Atributos("boolean", null, code);
 				    } else {
 				    
 				    	// Outros tipos
@@ -357,15 +380,13 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 							System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
 							System.exit(-1);
 						} else {
-							RESULT = new Atributos(tipo1, null, "");
+							RESULT = new Atributos("boolean", null, code);
 						}
 					}
 				} else {
-					if (tipo1 == "integer" && tipo2 == "integer") {
-						RESULT = new Atributos("integer", null, "");
-					} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
-							    (tipo1 == "double" && tipo2 == "double") ){
-					    RESULT = new Atributos("double", null, "");
+					if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
+							    (tipo1 == "double" && tipo2 == "double") || (tipo1 == "integer" && tipo2 == "integer") ){
+					    RESULT = new Atributos("boolean", null, code);
 				    } else {
 						System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 						System.err.println("Operandos devem ser numeros inteiros ou reais.");
@@ -401,12 +422,13 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 					}
 				}
 				
+				String code = e1.Code + " " + o.Code + " " + e2.Code;
 				
 				if (tipo1 == "integer" && tipo2 == "integer") {
-					RESULT = new Atributos("integer", null, "");
+					RESULT = new Atributos("integer", null, code);
 				} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
 						    (tipo1 == "double" && tipo2 == "double") ){
-				    RESULT = new Atributos("double", null, "");
+				    RESULT = new Atributos("double", null, code);
 			    } else {
 					System.err.println("\nErro semantico.\nAdditiveExpression ::= MultiplicativeExpression AddOperator AdditiveExpression");
 					System.err.println("Operandos devem ser numeros inteiros ou reais.");
@@ -441,11 +463,13 @@ MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 					}
 				}
 				
+				String code =  e1.Code + " " + o.Code + " " + e2.Code;
+				
 				if (tipo1 == "integer" && tipo2 == "integer") {
-					RESULT = new Atributos("integer", null, "");
+					RESULT = new Atributos("integer", null, code);
 				} else if ( (tipo1 == "integer" && tipo2 == "double") || (tipo1 == "double" && tipo2 == "integer") ||
 						    (tipo1 == "double" && tipo2 == "double") ){
-				    RESULT = new Atributos("double", null, "");
+				    RESULT = new Atributos("double", null, code);
 			    } else {
 					System.err.println("\nErro semantico.\nMultiplicativeExpression ::= UnaryExpression MultiplyOperator MultiplicativeExpression");
 					System.err.println("Operandos devem ser numeros inteiros ou reais.");
@@ -475,7 +499,8 @@ UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 						System.err.println("Operador de negacao (not) deve ser usado em expressões booleanas.");
 						System.exit(-1);
 					} else {
-						RESULT = new Atributos("boolean", null, "");
+						String code = o.Code + e.Code;
+						RESULT = new Atributos("boolean", null, code);
 					}
 				} else { // se for seta
 						System.err.println("\nErro semantico.\nUnaryExpression ::= UnaryOperator UnaryExpression");
@@ -506,16 +531,21 @@ UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 				} else {
 					switch (e2.ColKind) {
 							case INCLUDES:
+								RESULT = new Atributos("boolean",null,e1.Code + "." + e2.Code, e2.ColKind);
+								break;
 							case EXCLUDES:
-							case EXISTS: 
+								RESULT = new Atributos("boolean",null,"!(" + e1.Code + "." + e2.Code + ")", e2.ColKind);
+								break;
+							case EXISTS:
+								RESULT = new Atributos("boolean",null,e2.Code + "(" + e1.Code + ")", e2.ColKind); break; 
 							case FORALL:
-								RESULT = new Atributos("boolean", null, "", e2.ColKind);
+								RESULT = new Atributos("boolean", null, e2.Code + "(" + e1.Code + ")", e2.ColKind);
 								break;
 							case SIZE:
-								RESULT = new Atributos("integer", null, "", e2.ColKind);
+								RESULT = new Atributos("integer", null, e1.Code + e2.Code, e2.ColKind);
 								break;
 							case SELECT:
-								RESULT = new Atributos("collection", null, "", e2.ColKind);
+								RESULT = new Atributos("collection", null, e2.Code + "(" + e1.Code + ")", e2.ColKind);
 								break;
 						}
 				}
@@ -523,7 +553,7 @@ UnaryExpression ::= PrimaryExpression:e {: RESULT = e; :}
 				
 PrimaryExpression ::= LiteralCollection:c {: RESULT = c; :}
 				| IfExpression:c {: RESULT = c; :}
-				| LPAREN OCLExpression:c RPAREN {: RESULT = c; :}
+				| LPAREN OCLExpression:c RPAREN {: RESULT = new Atributos(c.Type,c.Value,"(" + c.Code + ")"); :}
 				| CollectionExpression:c {: RESULT = c; :};
 
 LiteralCollection ::= Number:n 		{: RESULT = n; :}
@@ -531,14 +561,14 @@ LiteralCollection ::= Number:n 		{: RESULT = n; :}
 					| STRING:s  	{: RESULT = s; :}
 					| PropertyCall:p 	{: RESULT = p; :};
 				
-IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression ELSE LogicalExpression ENDIF
+IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression:e2 ELSE LogicalExpression:e3 ENDIF
 				{:
 					if (e1.Type != "boolean") {
 						System.err.println("\nErro semantico.\nIfExpression ::= IF LogicalExpression THEN  LogicalExpression ELSE LogicalExpression ENDIF");
 						System.err.println("Condicao deve ser boolean.");
 						System.exit(-1);	
 					}
-					RESULT = new Atributos(null, null, null);
+					RESULT = new Atributos(null, null, e1.Code + "?" + e2.Code + " : " + e3.Code);
 				:};		
 
 //Expressões em coleções	
@@ -552,23 +582,174 @@ CollectionOperations ::= SelectOperation:s {: RESULT = s; :}
 				|ForAllOperation:s {: RESULT = s; :}
 				|SizeOperation:s {: RESULT = s; :};
 				
-SelectOperation ::= SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
-				{: RESULT = new Atributos("collection", null, "", SELECT); :}
-				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				{: RESULT = new Atributos("collection", null, "", SELECT); :}
-				| SELECT LPAREN OCLExpression RPAREN
-				{: RESULT = new Atributos("collection", null, "", SELECT); :};
+SelectOperation ::= SELECT LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifier:ts BARRA OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String selectName = getSelectName();
+					code.append("private IEnumerable " + selectName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+					code.append( ts.Code + " " + cp.Code +";"+ newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ")" + newLine +    "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   "yield return " + vars[i] + ";" + newLine);
+					code.append(   "}");
+					code.append(  "}" + newLine);
+					code.append( "}" + newLine);
+									
+					GenAuxMethod(code.toString());
+				
+					RESULT = new Atributos("collection", null, selectName, SELECT);
+				:}
+				| SELECT LPAREN CollectionParameters:cp BARRA OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String selectName = getSelectName();
+					code.append("private IEnumerable " + selectName + "( ICollection collection ){" + newLine);
+					code.append( "var " + cp.Code + ";"+newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ")" + newLine +    "{" + newLine);
+					
+					for(int i = 0; i < vars.length; i++)
+						code.append(   "yield return " + vars[i] + ";" + newLine);
+					code.append(  "}" + newLine);	
+					code.append( "}" + newLine);
+					code.append( "}" + newLine);
+					
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("collection",null,selectName, SELECT);
+				:}
+				| SELECT LPAREN OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String selectName = getSelectName();
+					code.append("private IEnumerable " + selectName + "( ICollection collection ){" + newLine);
+					
+					code.append( "foreach(var v in collection) {" + newLine);					
+					code.append(  "if (" + e.Code + ") yield return v;" + newLine );
+					code.append( "}" + newLine);
+					code.append( "}" + newLine);	
+					
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("collection",null,selectName, SELECT);
+				:};
 
-ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
-					{: RESULT = new Atributos("boolean", null, "", EXISTS); :}
-				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				{: RESULT = new Atributos("boolean", null, "", EXISTS); :}
-				| EXISTS LPAREN OCLExpression RPAREN
-				{: RESULT = new Atributos("boolean", null, "", EXISTS); :};
-
-IncludesOperation ::= INCLUDES LPAREN ID RPAREN
+ExistsOperation ::= EXISTS LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifier:ts BARRA OCLExpression:e RPAREN
 					{:
-						RESULT = new Atributos("boolean", null, "", INCLUDES);
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String existsName = getExistsName();
+					code.append("private bool " + existsName + "( ICollection collection ){" + newLine);
+					code.append( ts.Code + " " + cp.Code +";"+ newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ") return true;" + newLine );
+					code.append( "}" + newLine);
+					code.append("return false;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("boolean",null,existsName, EXISTS);
+					:}
+				| EXISTS LPAREN CollectionParameters:cp BARRA OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String existsName = getExistsName();
+					code.append("private bool " + existsName + "( ICollection collection ){" + newLine);
+					code.append( "var " + cp.Code + ";"+newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ") return true;" + newLine );
+					code.append( "}" + newLine);
+					code.append("return false;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("boolean",null,existsName, EXISTS);
+				:}
+				| EXISTS LPAREN OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String existsName = getExistsName();
+					code.append("private bool " + existsName + "( ICollection collection ){" + newLine);
+								
+					
+					code.append( "foreach(var v in collection) {" + newLine);					
+					code.append(  "if(" + e.Code + ") return true;" + newLine );
+					
+					code.append("return false;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("boolean",null,existsName, EXISTS);
+				:};
+
+IncludesOperation ::= INCLUDES LPAREN ID:i RPAREN
+					{:
+						RESULT = new Atributos("boolean", null, "Contains(" + i.Value + ")", INCLUDES);
 					:};	
 
 ExcludesOperation ::= EXCLUDES LPAREN ID:i RPAREN
@@ -578,7 +759,7 @@ ExcludesOperation ::= EXCLUDES LPAREN ID:i RPAREN
 							System.err.println("Identificador invalido.");
 							System.exit(-1);
 						} else {
-							RESULT = new Atributos("boolean", null, "", EXCLUDES);
+							RESULT = new Atributos("boolean", null, "!Contains(" + i.Value + ")", EXCLUDES);
 						}
 					:};
 
@@ -709,8 +890,8 @@ PathName ::= ID:i
 	   			:}	   		
 		   | ID QUATROPONTOS PathName;
 		
-Number ::= INTEGER:i {: RESULT = new Atributos("integer", Integer.parseInt(i.Value.toString()), "i.Value.toString()"); :}
-			| REAL:r {: RESULT = new Atributos("double", Double.parseDouble(r.Value.toString()), "r.Value.toString()"); :};
+Number ::= INTEGER:i {: RESULT = new Atributos("integer", Integer.parseInt(i.Value.toString()), i.Value.toString()); :}
+			| REAL:r {: RESULT = new Atributos("double", Double.parseDouble(r.Value.toString()), r.Value.toString()); :};
 
 BoolValue ::= TRUE:t {: RESULT = new Atributos("boolean", t.Value, "true"); :}
 			| FALSE:f {: RESULT = new Atributos("boolean", f.Value, "false"); :};
@@ -726,7 +907,7 @@ RelationalOperator ::= MAIORQ{: RESULT = new Atributos("string",">",">");:}
 					 | MAIORIGUAL{: RESULT = new Atributos("string",">=",">=");:} 
 					 | MENORQ{: RESULT = new Atributos("string","<","<");:} 
 					 | MENORIGUAL{: RESULT = new Atributos("string","<=","<=");:} 
-					 | IGUAL{: RESULT = new Atributos("string","==","==");:} 
+					 | IGUAL{: RESULT = new Atributos("string","=","==");:} 
 					 | DIFF{: RESULT = new Atributos("string","!=","!=");:};
 
 AddOperator ::= MAIS {: RESULT = new Atributos("string","+","+");:}
