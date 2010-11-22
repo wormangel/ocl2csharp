@@ -457,15 +457,15 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 
 PropertyCall ::= PathName:p {: RESULT = p; :}
 				| PathName:p LPAREN RPAREN {: RESULT = p; :}
-				| PathName LPAREN FormalParameters RPAREN
+				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = p; :}
 				| PathName:path PONTO PropertyCall:p {: RESULT = p; :};
 				
 				
-FormalParameters ::= FormalParameters VIRGULA FormalParameter
-				|FormalParameter;
+FormalParameters ::= FormalParameters:f1 VIRGULA FormalParameter:f2 {: RESULT = new Atributos(null, f1.Value.toString() + "," + f2.Value.toString(), ""); :}
+				|FormalParameter:f {: RESULT = f; :};
 							
-FormalParameter ::= ID DOISPONTOS TypeSpecifier
-				|PropertyCall;
+FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null, i.Value.toString() + ":" + t.Value.toString(), ""); :}
+				|PropertyCall:p {: RESULT = p; :};
 				
 PathName ::= ID:i 
 			{: 	RESULT = new Atributos("id",i.Value,""); 
