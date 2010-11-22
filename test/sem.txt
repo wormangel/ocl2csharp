@@ -4,8 +4,8 @@ pontos = 5 + 6
 --context ProgramaFidelidade inv:
 --socio.conta > 0
 
-context Cliente inv:
-cartoes->size() > 1
+--context Cliente inv:
+--cartoes->forAll(x = 'Luca')
 
 context ProgramaFidelidade::cadastrar(c:Cliente):boolean
 pre: 3 > 4
