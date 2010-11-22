@@ -7,7 +7,7 @@ pontos = 5 + 6
 context Cliente inv:
 cartoes->size() > 1
 
-context ProgramaFidelidade::cadastrar():boolean
+context ProgramaFidelidade::cadastrar(c:Cliente):boolean
 pre: 3 > 4
 
 --context Cliente inv:
@@ -19,11 +19,11 @@ pre: 3 > 4
 
 
 --
-context Cliente
-inv: blablabla < 3
+--context Cliente
+--inv: blablabla < 3
 
-context ParceiroPrograma
-inv c: true and 3
+--context ParceiroPrograma
+--inv c: true and 3
 
 --  propriedade que nao existe
 --context Conta
