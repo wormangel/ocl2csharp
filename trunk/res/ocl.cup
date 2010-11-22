@@ -97,7 +97,15 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
 					{: RESULT = new Atributos("string", i.Value.toString() + "::" + p.Value.toString(), ""); :}
 				   | ID:i QUATROPONTOS PropertyCall:p DOISPONTOS TypeSpecifier:t
-				   	{: RESULT = new Atributos("string", i.Value.toString() + "::" + p.Value.toString() + ":" + t.Value.toString(), ""); :};
+				   	{:
+				   		if (!XmiParser.isValidOperation(i.Value.toString(), p.Value.toString(), t.Value.toString())){
+				   			System.err.println("\nErro semantico.\nOperationContext ::= ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifie");
+							System.err.println("Operação inválida: " + p.Value.toString());
+							System.exit(0);
+				   		} else { 
+				   			RESULT = new Atributos("string", i.Value.toString() + "::" + p.Value.toString() + ":" + t.Value.toString(), ""); 
+				   		}	
+			   		:};
 				
 ClassifierContext ::= ID:i DOISPONTOS ID
 					{:
@@ -456,8 +464,8 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 //Literais
 
 PropertyCall ::= PathName:p {: RESULT = p; :}
-				| PathName:p LPAREN RPAREN {: RESULT = p; :}
-				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = p; :}
+				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null, p.Value.toString() + "()", ""); :}
+				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = new Atributos(null, p.Value.toString() + "(" + f.Value.toString() + ")", ""); :}
 				| PathName:path PONTO PropertyCall:p {: RESULT = p; :};
 				
 				

@@ -7,7 +7,7 @@ pontos = 5 + 6
 context Cliente inv:
 cartoes->size() > 1
 
-context ProgramaFidelidade::cadastrar(c:Cliente):boolean
+context ProgramaFidelidade::cadastrar():boolean
 pre: 3 > 4
 
 --context Cliente inv:

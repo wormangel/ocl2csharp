@@ -44,41 +44,13 @@ public class XmiParser {
 	
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
-		
-		// Testes
-//		boolean teste = isValidPath("Cartao", "proprietario.nome");
-//		System.out.println(teste);
-		
+
 		for (DomainClass c : fullParse()) {
 			System.out.println(c);
 		}
 		
-		System.out.println(isValidOperation("ProgramaFidelidade", "cadastrar", "c:Cliente,o:ProgramaFidelidade"));
-//		
-//		for (String string : listClasses()) {
-//			System.out.println("\n\n##### Classe: " + string);
-//			System.out.println(String.format("\n- Atributos de %s\n", string));
-//			for (Attribute op : parseClassAttributes(string)) {
-//				System.out.println(op);
-//			}
-//			System.out.println(String.format("\n- Operacoes de %s\n", string));
-//			for (Operation op : parseClassOperations(string)) {
-//				System.out.println(op);
-//			}
-//		}
-//
-//		System.out.println("\n\n--- ENUMERATORS\n\n");
-//		for (Enumerator e : parseEnums()) {
-//			System.out.println("-" + e.getName());
-//			for (String string : e.getItens()) {
-//				System.out.println(string);
-//			}
-//		}
-//		
-//		System.out.println(getClassName("_fx7WO2PXEd-bkL5iYhiD_Q"));
-//		return;
-		//boolean testey = isValidPath("Cliente", "nomse");
-		//System.out.println(teste);
+		System.out.println(isValidOperation("ProgramaFidelidade", "cadastrar(d:integer)","boolean"));
+
 	}
 	
 	
@@ -496,6 +468,7 @@ public class XmiParser {
 		return false;
 	}
 	
+	// Metodos que NAO recebem parametros
 	public static boolean isValidOperation(String className, String operation) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(true);
@@ -515,8 +488,9 @@ public class XmiParser {
 		return false;
 	}
 	
-	// Assume que vai ser invocado SEMPRE com parametros
-	public static boolean isValidOperation(String className, String operation, String parameters) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+	// operationCall sempre deve ser invocado com parenteses!
+	// Exemplo: isValidOperation("ProgramaFidelidade", "cadastra(c:Cliente)", "boolean")
+	public static boolean isValidOperation(String className, String operationCall, String returnType) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(true);
 		DocumentBuilder builder = factory.newDocumentBuilder();
@@ -528,23 +502,63 @@ public class XmiParser {
 		
 		String xPathExpr;
 		
-		// Separa os parametros
-		for (String parameter : parameters.split(",")) {
-			xPathExpr = String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation[@name='%s']/ownedParameter", className, operation);
-			String paramName = parameter.split(":")[0];
-			String paramType = parameter.split(":")[1];
-			
-			xPathExpr += String.format("[@name='%s']", paramName );
-			xPathExpr += String.format("[@type='%s']", getXmiNameForType(paramType) );
-			
+		int indexLeftParen = operationCall.indexOf("(");
+		int indexRightParen = operationCall.indexOf(")");
+		String operation = operationCall.substring(0,indexLeftParen);
+		
+		String parameters = operationCall.substring(indexLeftParen+1, indexRightParen);
+
+		// Se nao tiver parametros
+		if (parameters.isEmpty()){
+			xPathExpr = String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation[@name='%s']", className, operation);
 			XPathExpression expr = xpath.compile(xPathExpr);
 			Object result = expr.evaluate(doc, XPathConstants.NODESET);
 			if (result != null){
 				NodeList nodes = (NodeList) result;
-				if (nodes.getLength() <= 0)
+				if (nodes.getLength() <= 0) { // se nao tem metodo com esse nome
 					return false;
+				} else { // se tiver metodo com esse nome
+					
+					int quantOverloadsComParametros = 0;
+					int quantOverloads = nodes.getLength();
+					
+					for(int i = 0; i < nodes.getLength(); i++){ // pra cada metodo com esse nome
+						
+						Node nohAtual = nodes.item(i);
+						
+						for (int j = 0; j < nohAtual.getChildNodes().getLength(); j++){ // verifica se recebe parametros
+							NodeList nohsFilhos = nohAtual.getChildNodes();
+							if(nohsFilhos.item(j).getNodeName().equals("ownedParameter")) {
+								quantOverloadsComParametros++;
+								break;
+							}	
+						}
+					}
+					
+					if (quantOverloadsComParametros == quantOverloads) { // se todos os overloads recebem parametro, eh invalido
+						return false;
+					}
+				}
 			}
-		}		
+		} else { //Se tiver parametros
+			// Separa os parametros
+			for (String parameter : parameters.split(",")) {
+				xPathExpr = String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation[@name='%s']/ownedParameter", className, operation);
+				String paramName = parameter.split(":")[0];
+				String paramType = parameter.split(":")[1];
+				
+				xPathExpr += String.format("[@name='%s']", paramName );
+				xPathExpr += String.format("[@type='%s']", getXmiNameForType(paramType) );
+				
+				XPathExpression expr = xpath.compile(xPathExpr);
+				Object result = expr.evaluate(doc, XPathConstants.NODESET);
+				if (result != null){
+					NodeList nodes = (NodeList) result;
+					if (nodes.getLength() <= 0)
+						return false;
+				}
+			}	
+		}
 		return true;
 	}
 	
