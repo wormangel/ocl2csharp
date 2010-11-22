@@ -8,8 +8,7 @@ context Cliente inv:
 cartoes->size() > 1
 
 context ProgramaFidelidade::cadastrar(c:Cliente):boolean
-pre: cliente->includes(c)
-pos: cliente->includes(c)
+pre: 3 > 4
 
 --context Cliente inv:
 --cartoes->size() > 1

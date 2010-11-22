@@ -27,11 +27,13 @@ public class XmiParser {
 	public static final String VISIBILITY_PROTECTED = "protected";
 	public static final String VISIBILITY_PACKAGE = "internal";
 	
+	// Tipos C#
 	public static final String TYPE_VOID = "void";
 	public static final String TYPE_INT = "int";
 	public static final String TYPE_STRING = "string";
 	public static final String TYPE_BOOLEAN = "bool";
 	
+	// Tipos OCL
 	public static final String RETURN_TYPE_VOID = "void";
 	public static final String RETURN_TYPE_INT = "integer";
 	public static final String RETURN_TYPE_STRING = "string";
@@ -51,7 +53,7 @@ public class XmiParser {
 			System.out.println(c);
 		}
 		
-		System.out.println(getType("Conta", "pontos"));
+		System.out.println(isValidOperation("ProgramaFidelidade", "cadastrar", "c:Cliente,o:ProgramaFidelidade"));
 //		
 //		for (String string : listClasses()) {
 //			System.out.println("\n\n##### Classe: " + string);
@@ -511,6 +513,83 @@ public class XmiParser {
 				return true;
 		}
 		return false;
+	}
+	
+	// Assume que vai ser invocado SEMPRE com parametros
+	public static boolean isValidOperation(String className, String operation, String parameters) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		
+		String xPathExpr;
+		
+		// Separa os parametros
+		for (String parameter : parameters.split(",")) {
+			xPathExpr = String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation[@name='%s']/ownedParameter", className, operation);
+			String paramName = parameter.split(":")[0];
+			String paramType = parameter.split(":")[1];
+			
+			xPathExpr += String.format("[@name='%s']", paramName );
+			xPathExpr += String.format("[@type='%s']", getXmiNameForType(paramType) );
+			
+			XPathExpression expr = xpath.compile(xPathExpr);
+			Object result = expr.evaluate(doc, XPathConstants.NODESET);
+			if (result != null){
+				NodeList nodes = (NodeList) result;
+				if (nodes.getLength() <= 0)
+					return false;
+			}
+		}		
+		return true;
+	}
+	
+	// Retorna o nome gerado pelo XMI para um determinado tipo
+	// Exemplo: getXmiNameForType("Conta") = "_fx7WemPXEd-bkL5iYhiD_Q"
+	public static String getXmiNameForType(String type) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException{
+		
+		if (type.equals(RETURN_TYPE_INT)){
+			return "pathmap://UML2_LIBRARIES/UML2PrimitiveTypes.library.uml2#_IXlH8K86EdieaYgxtVWN8Q";
+		} else if (type.equals(RETURN_TYPE_BOOLEAN)){
+			return "pathmap://UML2_LIBRARIES/UML2PrimitiveTypes.library.uml2#_IXlH8K86EdieaYgxtVWN8Q";
+		} else if (type.equals(RETURN_TYPE_STRING)){
+			return "pathmap://UML2_LIBRARIES/UML2PrimitiveTypes.library.uml2#_IXlH8a86EdieaYgxtVWN8Q";
+		}
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		XPathExpression expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']", type));
+		Object result = expr.evaluate(doc, XPathConstants.NODESET);
+		if (result != null){
+			NodeList nodes = (NodeList) result;
+			if (nodes.getLength() > 0) {
+				if(nodes.item(0).getAttributes().getNamedItem("xmi:id") != null){
+					return nodes.item(0).getAttributes().getNamedItem("xmi:id").getNodeValue();	
+				}
+			} 
+		}		
+		
+		expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Enumeration'][@name='%s']", type));
+		result = expr.evaluate(doc, XPathConstants.NODESET);
+		if (result != null){
+			NodeList nodes = (NodeList) result;
+			if (nodes.getLength() > 0) {
+				if(nodes.item(0).getAttributes().getNamedItem("xmi:id") != null){
+					return nodes.item(0).getAttributes().getNamedItem("xmi:id").getNodeValue();
+				}
+			} 
+		}		
+		return null;
 	}
 	
 	// Espera receber uma expressao como Cliente.programa.parceiros e verifica se eh valida, navegavel
