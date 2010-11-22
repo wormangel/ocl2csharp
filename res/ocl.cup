@@ -99,7 +99,7 @@ OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
 				   | ID:i QUATROPONTOS PropertyCall:p DOISPONTOS TypeSpecifier:t
 				   	{:
 				   		if (!XmiParser.isValidOperation(i.Value.toString(), p.Value.toString(), t.Value.toString())){
-				   			System.err.println("\nErro semantico.\nOperationContext ::= ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifie");
+				   			System.err.println("\nErro semantico.\nOperationContext ::= ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier");
 							System.err.println("Operação inválida: " + p.Value.toString());
 							System.exit(0);
 				   		} else { 
