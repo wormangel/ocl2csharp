@@ -17,6 +17,63 @@ action code {:
 		int index = fullContext.indexOf("::");
 		return fullContext.substring(0,index);				
 	}
+	
+	private String getOperationName(String fullContext) {
+		int index1 = fullContext.indexOf("::");
+		int index2 = fullContext.indexOf("(");
+		return fullContext.substring(index1+2,index2);
+	}
+	
+	// GERAÇÃO DE CÓDIGO
+	
+	private void GenAuxMethod(String code) { System.out.println(code);} // Imprime o codigo gerado na tela
+	
+	private String getFormalParameters(boolean includeResult) {
+		if (includeResult) {
+			if(formalParameters.equals("")) {
+				return formalParameters + "object result";
+			} else {
+				return formalParameters + ",object result";
+			}
+		} else {
+			return formalParameters;
+		}
+	}
+	
+	private String getParamNames(boolean includeResult){
+		String names = "";
+		String params = getFormalParameters(includeResult);
+		if (params.equals(""))
+			return "";
+		String[] semVirgulas = params.split(",");
+		for(String s : semVirgulas){
+			String[] semEspacos = s.split(" ");
+			names += semEspacos[1] + ",";
+		}
+		if (names.endsWith(","))
+			names = names.substring(0,names.length()-1);
+		return names;
+	}
+	private String formalParameters = "";
+	private boolean isResult;
+	
+	// Invariantes
+	private int invCount = 0;
+	private String getInvName() { invCount++; return "CheckInv" + invCount;}
+	
+	// Pré e pós condições
+	private int preCount = 0;
+	private String getPreName() { preCount++; return "CheckPre" + preCount;}
+	private String lastPreName() { return "CheckPre" + preCount;}
+	private int posCount = 0;
+	private String getPosName() { posCount++; return "CheckPos" + posCount;}
+	private String lastPosName() { return "CheckPos" + posCount;} 
+	
+	// forAll
+	private int forAllCount = 0;
+	private String getForAllName() { forAllCount++; return "ForAll"+forAllCount; }
+	
+	
 :}
 
 /* Terminais  */
@@ -81,18 +138,104 @@ Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullCont
 ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
 					 | CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
 				
-ContextBody ::= InvExpression
-			  | PreExpression;
+ContextBody ::= InvExpression:i  {: System.out.println(i.Code); :}
+			  | PreExpression:p {: System.out.println(p.Code); :};
 				
-InvExpression ::= INV DOISPONTOS OCLExpression 
-				| INV ID DOISPONTOS OCLExpression;
+InvExpression ::= INV DOISPONTOS OCLExpression:e 
+				{: 
+					String code = "private void " + getInvName() + "() { " + 
+						"if (!(" + e.Code +")) throw new Exception(\"Inv violada\");" + " }";
+					RESULT = new Atributos("boolean",null,code); 
+				:}
+				| INV ID:i DOISPONTOS OCLExpression:e
+				{:
+					String code = "private void checkInv" + i.Value.toString()+ "() { " + 
+						"if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }";
+		 			RESULT = new Atributos("boolean",null,code);
+				:} ;
 
-PreExpression ::= PRE DOISPONTOS OCLExpression
-				| PRE ID DOISPONTOS OCLExpression
-				| POS DOISPONTOS OCLExpression
-				| POS ID DOISPONTOS OCLExpression
-				| PRE DOISPONTOS OCLExpression POS DOISPONTOS OCLExpression
-				| PRE ID: DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression;
+PreExpression ::= PRE DOISPONTOS OCLExpression:e
+				{:
+					String code = "private void " + getPreName() + "(" + getFormalParameters(false) + ") { " + 
+				  			"if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }";
+					RESULT =  new Atributos(null,null,code); 
+				:}
+				| PRE ID:i DOISPONTOS OCLExpression:e
+				{:
+					String code = "private void CheckPre" +i.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+							"if (!(" + e.Code + ")) throw new Exception(\"Pre violada\");" + " }";
+					RESULT = new Atributos(null,null,code); 
+				:}
+				| POS DOISPONTOS OCLExpression:e
+				{:
+					String code;
+					if(isResult){
+			  			code = "private void " +getPosName() + "(" + getFormalParameters(true) + ") { " + 
+			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+			  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
+			  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() +
+			  				"(" + getParamNames(true) + ");" + " }"; 
+			  		} else {
+			  			code = "private void " +getPosName() + "(" + getFormalParameters(false) + ") { " + 
+			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"; 
+			  		} 
+			  		RESULT = new Atributos(null,null,code);
+				:}
+				| POS ID:i DOISPONTOS OCLExpression:e
+				{:
+					String code;
+			  		if(isResult){
+			  			code = "private void CheckPos" + i.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
+			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" + 
+			  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
+			  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i.Value.toString() + 
+			  				"(" + getParamNames(true) + ");" + " }";
+			  		} else {
+			  			code = "private void CheckPos" + i.Value.toString() + "(" + formalParameters + ") { " + 
+			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }";
+	  				} 
+	  				
+	  				RESULT = new Atributos(null,null,code);
+	  			:}
+				
+				| PRE DOISPONTOS OCLExpression:e1 POS DOISPONTOS OCLExpression:e2
+				{: 
+					String code;
+					if(isResult) {
+						code = "private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+							+"private void " + getPosName() + "(" + getFormalParameters(true) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+							+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
+							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(true) + ");" + " }";
+					} else {
+						code = 	"private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void " + getPosName() + "(" + getFormalParameters(false) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+						+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
+						"(" + getParamNames(false) +  ");" + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(false) + ");" + " }";
+					}
+					
+				  	RESULT = new Atributos(null,null,code);	
+				:}
+				| PRE ID:i1 DOISPONTOS OCLExpression:e1 POS ID:i2 DOISPONTOS OCLExpression:e2
+				{:
+					String code;
+					if(isResult){
+					  	code = "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+					  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+							"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
+							"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+							"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
+							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(true) + ");" + " }";
+					} else {
+						code = "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+					  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+							"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+							"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+							"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
+							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(false) + ");" + " }";
+					}
+					
+					RESULT = new Atributos(null,null,code);
+				:};
 
 OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
 					{: RESULT = new Atributos("string", i.Value.toString() + "::" + p.Value.toString(), ""); :}
@@ -439,17 +582,93 @@ ExcludesOperation ::= EXCLUDES LPAREN ID:i RPAREN
 						}
 					:};
 
-ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
-				{: RESULT = new Atributos("boolean", null, "", SELECT); :}
-				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				{: RESULT = new Atributos("boolean", null, "", SELECT); :}
-				| FORALL LPAREN OCLExpression RPAREN
-				{: RESULT = new Atributos("boolean", null, "", SELECT); :};
+ForAllOperation ::= FORALL LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifier:ts BARRA OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String forAllName = getForAllName();
+					code.append("private bool " + forAllName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+					code.append( ts.Code + " " + cp.Code +";"+ newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "result = result and " + e.Code + ";" + newLine );
+					//code.append( "}" + newLine);
+					code.append("return result;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("boolean",null,forAllName, FORALL);
 
-SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos("integer", null, "", SIZE); :};
+				:}
+				| FORALL LPAREN CollectionParameters:cp BARRA OCLExpression:e RPAREN
+				{: 
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String forAllName = getForAllName();
+					code.append("private bool " + forAllName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+					code.append( "var " + cp.Code + ";"+newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "result = result && (" + e.Code + ");" + newLine );
+					code.append( "}" + newLine);
+					code.append("return result;" + newLine + "}");
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("boolean",null,forAllName, FORALL);
+ 
+				:}
+				| FORALL LPAREN OCLExpression:e RPAREN
+				{: 
+				
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String forAllName = getForAllName();
+					code.append("private bool " + forAllName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+						
+					code.append( "foreach(var v in collection) {" + newLine);					
+					code.append(  "result = result && ( v." + e.Code + ");" + newLine );
+					code.append("}" + newLine);
+					code.append("return result;" + newLine + "}");
+					//code.append("}" + newLine);
+					GenAuxMethod(code.toString());
+					
+					RESULT = new Atributos("boolean", null, forAllName, FORALL); 
+				:};
+
+SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos("integer", null, ".Count()", SIZE); :};
 
 CollectionParameters ::= PropertyCall:p {: RESULT = p; :}
-				| PropertyCall VIRGULA CollectionParameters;		
+				| PropertyCall:p VIRGULA CollectionParameters:cp {: RESULT = new Atributos(null,null,p.Code + "," + cp.Code); :};		
 				
 
 //Tipos
@@ -464,19 +683,19 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 //Literais
 
 PropertyCall ::= PathName:p {: RESULT = p; :}
-				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null, p.Value.toString() + "()", ""); :}
-				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = new Atributos(null, p.Value.toString() + "(" + f.Value.toString() + ")", ""); :}
-				| PathName:path PONTO PropertyCall:p {: RESULT = p; :};
+				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(p.Type, p.Value.toString() + "()", p.Code + "()"); :}
+				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = new Atributos(p.Type, p.Value.toString() + "(" + f.Value.toString() + ")", p.Code + "(" + f.Code + ")"); :}
+				| PathName:path PONTO PropertyCall:p {: RESULT = new Atributos(p.Type, path.Value.toString() + "." + p.Value.toString(), p.Code + "." + p.Code); :};
 				
 				
-FormalParameters ::= FormalParameters:f1 VIRGULA FormalParameter:f2 {: RESULT = new Atributos(null, f1.Value.toString() + "," + f2.Value.toString(), ""); :}
+FormalParameters ::= FormalParameters:f1 VIRGULA FormalParameter:f2 {: RESULT = new Atributos(null, f1.Value.toString() + "," + f2.Value.toString(), f1.Code + "," + f2.Code); :}
 				|FormalParameter:f {: RESULT = f; :};
 							
-FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null, i.Value.toString() + ":" + t.Value.toString(), ""); :}
+FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null, i.Value.toString() + ":" + t.Value.toString(), t.Code + " " + i.Code); :}
 				|PropertyCall:p {: RESULT = p; :};
 				
 PathName ::= ID:i 
-			{: 	RESULT = new Atributos("id",i.Value,""); 
+			{: 	RESULT = new Atributos("id",i.Value,i.Value.toString()); 
 			:}
 		   | ID:i PONTO PathName:p 
 		   		{: 
@@ -485,23 +704,23 @@ PathName ::= ID:i
 						System.err.println("Path invalido.");
 						System.exit(-1);
 		   			} else {
-		   				RESULT = new Atributos(XmiParser.getType(XmiParser.getAssociationName(currentContext, i.Value.toString()), p.Value.toString()), i.Value + "." + p.Value, "");	
+		   				RESULT = new Atributos(XmiParser.getType(XmiParser.getAssociationName(currentContext, i.Value.toString()), p.Value.toString()), i.Value + "." + p.Value, i.Code + "." + p.Code);	
 		   			}
 	   			:}	   		
 		   | ID QUATROPONTOS PathName;
 		
-Number ::= INTEGER:i {: RESULT = new Atributos("integer", Integer.parseInt(i.Value.toString()), ""); :}
-			| REAL:r {: RESULT = new Atributos("double", Double.parseDouble(r.Value.toString()), ""); :};
+Number ::= INTEGER:i {: RESULT = new Atributos("integer", Integer.parseInt(i.Value.toString()), "i.Value.toString()"); :}
+			| REAL:r {: RESULT = new Atributos("double", Double.parseDouble(r.Value.toString()), "r.Value.toString()"); :};
 
-BoolValue ::= TRUE:t {: RESULT = new Atributos("boolean", t.Value, ""); :}
-			| FALSE:f {: RESULT = new Atributos("boolean", f.Value, ""); :};
+BoolValue ::= TRUE:t {: RESULT = new Atributos("boolean", t.Value, "true"); :}
+			| FALSE:f {: RESULT = new Atributos("boolean", f.Value, "false"); :};
 		
 // Operadores
 
-LogicalOperator ::= AND {: RESULT = new Atributos("string", "&&", ""); :}
-				  | OR {: RESULT = new Atributos("string", "||", ""); :}
-				  | XOR {: RESULT = new Atributos("string", "^", ""); :}
-				  | IMPLIES {: RESULT = new Atributos("string", "implies", ""); :};
+LogicalOperator ::= AND {: RESULT = new Atributos("string", "&&", "&&"); :}
+				  | OR {: RESULT = new Atributos("string", "||", "||"); :}
+				  | XOR {: RESULT = new Atributos("string", "^", "^"); :}
+				  | IMPLIES {: RESULT = new Atributos("string", "implies", "implies"); :};
 		
 RelationalOperator ::= MAIORQ{: RESULT = new Atributos("string",">",">");:} 
 					 | MAIORIGUAL{: RESULT = new Atributos("string",">=",">=");:} 
@@ -510,11 +729,11 @@ RelationalOperator ::= MAIORQ{: RESULT = new Atributos("string",">",">");:}
 					 | IGUAL{: RESULT = new Atributos("string","==","==");:} 
 					 | DIFF{: RESULT = new Atributos("string","!=","!=");:};
 
-AddOperator ::= MAIS {: RESULT = new Atributos("string","+","");:}
-				| MENOS {: RESULT = new Atributos("string","-","");:};
+AddOperator ::= MAIS {: RESULT = new Atributos("string","+","+");:}
+				| MENOS {: RESULT = new Atributos("string","-","-");:};
 				
 MultiplyOperator ::= VEZES {: RESULT = new Atributos("string","*","*"); :}
 				| DIVIDIR {: RESULT = new Atributos("string","/","/"); :};
 				
-UnaryOperator ::= NOT {: RESULT = new Atributos("string","not","");:}
-				| SETA {: RESULT = new Atributos("string","->","");:};
+UnaryOperator ::= NOT {: RESULT = new Atributos("string","not","!");:}
+				| SETA {: RESULT = new Atributos("string","->","seta");:};
