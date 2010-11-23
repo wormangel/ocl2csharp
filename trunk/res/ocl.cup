@@ -26,6 +26,12 @@ action code {:
 		return fullContext.substring(index1+2,index2);
 	}
 	
+	private String getResultType(String fullContext) {
+		String[] tokens = fullContext.split(":");
+		int length = tokens.length;
+		return tokens[length-1];
+	}
+	
 	// GERAÇÃO DE CÓDIGO
 	
 	private void GenAuxMethod(String code) { System.out.println(code);} // Imprime o codigo gerado na tela
@@ -78,7 +84,6 @@ action code {:
 	// select
 	private int selectCount = 0;
 	private String getSelectName() { selectCount++; return "Select"+selectCount; } 
-	private String caller;
 	
 	// exists
 	private int existsCount = 0;
@@ -143,7 +148,7 @@ OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				
 OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; isResult = false; formalParameters = null; :};
+Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; isResult = false; formalParameters = ""; :};
 
 ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
 					 | CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
@@ -179,85 +184,118 @@ InvExpression ::= INV DOISPONTOS OCLExpression:e
 
 PreExpression ::= PRE DOISPONTOS OCLExpression:e
 				{:
-					String code = "private void " + getPreName() + "(" + getFormalParameters(false) + ") { " + 
-				  			"if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }";
-					RESULT =  new Atributos(null,null,code); 
+					if (e.Type != "boolean"){
+						System.err.println("\nErro semantico.\nPreExpression ::= PRE DOISPONTOS OCLExpression");
+						System.err.println("Pré-condição deve ser boolean.");
+						System.exit(0);
+					} else {
+						String code = "private void " + getPreName() + "(" + getFormalParameters(false) + ") { " + 
+					  			"if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }";
+						RESULT =  new Atributos("boolean",null,code); 
+					}
 				:}
 				| PRE ID:i DOISPONTOS OCLExpression:e
 				{:
-					String code = "private void CheckPre" +i.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
-							"if (!(" + e.Code + ")) throw new Exception(\"Pre violada\");" + " }";
-					RESULT = new Atributos(null,null,code); 
+					if (e.Type != "boolean"){
+						System.err.println("\nErro semantico.\nPreExpression ::= PRE ID DOISPONTOS OCLExpression");
+						System.err.println("Pré-condição deve ser boolean.");
+						System.exit(0);
+					} else {
+						String code = "private void CheckPre" +i.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+								"if (!(" + e.Code + ")) throw new Exception(\"Pre violada\");" + " }";
+						RESULT = new Atributos("boolean",null,code); 
+					}
 				:}
 				| POS DOISPONTOS OCLExpression:e
 				{:
-					String code;
-					if(isResult){
-			  			code = "private void " +getPosName() + "(" + getFormalParameters(true) + ") { " + 
-			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" +
-			  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
-			  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() +
-			  				"(" + getParamNames(true) + ");" + " }"; 
-			  		} else {
-			  			code = "private void " +getPosName() + "(" + getFormalParameters(false) + ") { " + 
-			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"; 
-			  		} 
-			  		RESULT = new Atributos(null,null,code);
+					if (e.Type != "boolean"){
+						System.err.println("\nErro semantico.\nPreExpression ::= POS DOISPONTOS OCLExpression");
+						System.err.println("Pós-condição deve ser boolean.");
+						System.exit(0);
+					} else {
+						String code;
+						if(isResult){
+				  			code = "private void " +getPosName() + "(" + getFormalParameters(true) + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+				  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
+				  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() +
+				  				"(" + getParamNames(true) + ");" + " }"; 
+				  		} else {
+				  			code = "private void " +getPosName() + "(" + getFormalParameters(false) + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"; 
+				  		}
+				  		RESULT = new Atributos("boolean",null,code); 
+			  		}			  		
 				:}
 				| POS ID:i DOISPONTOS OCLExpression:e
 				{:
-					String code;
-			  		if(isResult){
-			  			code = "private void CheckPos" + i.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
-			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" + 
-			  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
-			  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i.Value.toString() + 
-			  				"(" + getParamNames(true) + ");" + " }";
-			  		} else {
-			  			code = "private void CheckPos" + i.Value.toString() + "(" + formalParameters + ") { " + 
-			  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }";
-	  				} 
-	  				
-	  				RESULT = new Atributos(null,null,code);
+					if (e.Type != "boolean"){
+						System.err.println("\nErro semantico.\nPreExpression ::= POS ID DOISPONTOS OCLExpression");
+						System.err.println("Pós-condição deve ser boolean.");
+						System.exit(0);
+					} else {
+						String code;
+				  		if(isResult){
+				  			code = "private void CheckPos" + i.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" + 
+				  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
+				  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i.Value.toString() + 
+				  				"(" + getParamNames(true) + ");" + " }";
+				  		} else {
+				  			code = "private void CheckPos" + i.Value.toString() + "(" + formalParameters + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }";
+		  				} 
+		  				RESULT = new Atributos("boolean",null,code);
+	  				}
 	  			:}
 				
 				| PRE DOISPONTOS OCLExpression:e1 POS DOISPONTOS OCLExpression:e2
 				{: 
-					String code;
-					if(isResult) {
-						code = "private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
-							+"private void " + getPosName() + "(" + getFormalParameters(true) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
-							+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
-							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(true) + ");" + " }";
+					if (e1.Type != "boolean" || e2.Type != "boolean"){
+						System.err.println("\nErro semantico.\nPreExpression ::= PRE DOISPONTOS OCLExpression POS DOISPONTOS OCLExpression");
+						System.err.println("Pré e pós-condições deve ser boolean.");
+						System.exit(0);
 					} else {
-						code = 	"private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
-						+"private void " + getPosName() + "(" + getFormalParameters(false) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
-						+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
-						"(" + getParamNames(false) +  ");" + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(false) + ");" + " }";
-					}
-					
-				  	RESULT = new Atributos(null,null,code);	
+						String code;
+						if(isResult) {
+							code = "private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+								+"private void " + getPosName() + "(" + getFormalParameters(true) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+								+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
+								"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(true) + ");" + " }";
+						} else {
+							code = 	"private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+							+"private void " + getPosName() + "(" + getFormalParameters(false) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+							+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
+							"(" + getParamNames(false) +  ");" + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(false) + ");" + " }";
+						}
+					  	RESULT = new Atributos("boolean",null,code);
+				  	}	
 				:}
 				| PRE ID:i1 DOISPONTOS OCLExpression:e1 POS ID:i2 DOISPONTOS OCLExpression:e2
 				{:
-					String code;
-					if(isResult){
-					  	code = "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
-					  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
-							"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
-							"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
-							"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
-							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(true) + ");" + " }";
+					if (e1.Type != "boolean" || e2.Type != "boolean"){
+						System.err.println("\nErro semantico.\nPreExpression ::= PRE ID DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression");
+						System.err.println("Pré e pós-condições deve ser boolean.");
+						System.exit(0);
 					} else {
-						code = "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
-					  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
-							"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
-							"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
-							"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
-							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(false) + ");" + " }";
+						String code;
+						if(isResult){
+						  	code = "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+						  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+								"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
+								"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+								"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
+								"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(true) + ");" + " }";
+						} else {
+							code = "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+						  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+								"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+								"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+								"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
+								"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(false) + ");" + " }";
+						}
+						RESULT = new Atributos("boolean",null,code);
 					}
-					
-					RESULT = new Atributos(null,null,code);
 				:};
 
 OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
@@ -374,8 +412,7 @@ RelationalExpression  ::= AdditiveExpression:e {: RESULT = e; :}
 				    } else {
 				    
 				    	// Outros tipos
-				    	
-						if (tipo1 != tipo2) {
+						if (!tipo1.equals(tipo2)) {
 							System.err.println("\nErro semantico.\nRelationalExpression ::= AdditiveExpression RelationalOperator RelationalExpression");
 							System.err.println("Operandos devem ser do mesmo tipo para operacoes de (des)igualdade.");
 							System.exit(-1);
@@ -863,7 +900,7 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 		
 //Literais
 
-PropertyCall ::= RESULT {: isResult = true; RESULT = new Atributos(null,"result","result");:}
+PropertyCall ::= RESULT {: isResult = true; RESULT = new Atributos(getResultType(fullContext),"result","result");:}
 				| PathName:p {: RESULT = p; :}
 				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(p.Type, p.Value.toString() + "()", p.Code + "()"); :}
 				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = new Atributos(p.Type, p.Value.toString() + "(" + f.Value.toString() + ")", p.Code + "(" + f.Code + ")"); :}
