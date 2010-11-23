@@ -15,7 +15,7 @@ context Cliente
 inv: cartoes->exists(idade : integer | idade < 3) and 1 = 3
 
 context Cliente
-inv teste: cartoes->forAll(3 < 4)
+inv teste: cartoes->forAll(idade < 4)
 
 context Cliente
 inv c: cartoes->includes(x)
@@ -47,5 +47,6 @@ inv c: cartoes->includes(x)
 --context Cliente
 --inv c: cartoes->size()
 
--- result, select, self, path (com metodo) no context, pontos = 5+6, pre e pos, inv (BOOLEAN!!)
+-- result, select, self,  
+-- JA FOI: path (com metodo) no context, pontos = 5+6, inv (BOOLEAN!!), pre e pos,? 
 

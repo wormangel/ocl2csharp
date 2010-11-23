@@ -88,7 +88,7 @@ action code {:
 
 /* Terminais  */
 
-terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, SIZE, CONTEXT, LPAREN, RPAREN;
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, SIZE, CONTEXT, LPAREN, RPAREN, RESULT;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
 terminal 			VOID, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
@@ -143,7 +143,7 @@ OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				
 OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; :};
+Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; isResult = false; formalParameters = null; :};
 
 ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
 					 | CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
@@ -863,7 +863,8 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 		
 //Literais
 
-PropertyCall ::= PathName:p {: RESULT = p; :}
+PropertyCall ::= RESULT {: isResult = true; RESULT = new Atributos(null,"result","result");:}
+				| PathName:p {: RESULT = p; :}
 				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(p.Type, p.Value.toString() + "()", p.Code + "()"); :}
 				| PathName:p LPAREN FormalParameters:f RPAREN {: RESULT = new Atributos(p.Type, p.Value.toString() + "(" + f.Value.toString() + ")", p.Code + "(" + f.Code + ")"); :}
 				| PathName:path PONTO PropertyCall:p {: RESULT = new Atributos(p.Type, path.Value.toString() + "." + p.Value.toString(), p.Code + "." + p.Code); :};
