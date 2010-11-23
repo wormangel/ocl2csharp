@@ -118,6 +118,10 @@ comment = [\-][\-]~[\r]
 "*"			{if(debug) System.out.print("( VEZES )"); return symbol(sym.VEZES, "*"); }
 "/"			{if(debug) System.out.print("( DIVIDIR )"); return symbol(sym.DIVIDIR, "/"); }
 
+// Palavras-chave especiais
+
+"result"	{if(debug) System.out.print("( RESULT )"); return symbol(sym.RESULT); }
+
 // Caracteres especiais
 
 "\n"		{linha++;if(debug) System.out.println(); if(debug) System.out.println(linha+ "  ");}
