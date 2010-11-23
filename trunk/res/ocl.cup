@@ -368,8 +368,13 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 					System.err.println("Operandos devem ser do tipo boolean.");
 					System.exit(-1);
 				} else {
-					String code = e1.Code + " " + o.Code + " " + e2.Code;
-					RESULT = new Atributos("boolean", null, code);				
+					if (o.Value.equals("implies")){
+						RESULT = new Atributos("boolean", null, "!(" + e1.Code + " && !(" + e2.Code + "))");
+					} else {
+						String code = e1.Code + " " + o.Code + " " + e2.Code;
+						RESULT = new Atributos("boolean", null, code);
+					}
+									
 				}
 				:};
 				

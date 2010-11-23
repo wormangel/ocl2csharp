@@ -1,6 +1,9 @@
 context Conta inv:
 pontos = 5 + 6
 
+context Conta inv:
+pontos = 5 implies 6 = 1
+
 context ProgramaFidelidade::cadastrar(c:Cliente):boolean
 pre: 3 > 4
 pos: result = true
